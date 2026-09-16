@@ -338,7 +338,7 @@ export function openCart(startStep = 'cart') {
   step = isEmpty() && startStep !== 'cart' ? 'cart' : startStep;
   render();
   overlay.setAttribute('aria-hidden', 'false');
-  if (!wasOpen) lockScroll();
+  if (!wasOpen) lockScroll('cart');
   requestAnimationFrame(() => overlay.classList.add('is-open'));
 }
 
@@ -348,7 +348,7 @@ export function closeCart() {
   overlay.setAttribute('aria-hidden', 'true');
   releaseFocus?.();
   releaseFocus = null;
-  unlockScroll();
+  unlockScroll('cart');
   if (step === 'sent' || step === 'fallback') step = 'cart';
 }
 
@@ -366,8 +366,6 @@ export function renderCartBar() {
       <span class="cart-bar__cta">View cart ${icons.arrowRight}</span>
     </button>`;
   document.body.append(bar);
-
-  bar.querySelector('[data-open-cart]').addEventListener('click', () => openCart());
 
   subscribe(({ count, subtotal: sub }) => {
     qs('[data-bar-count]', bar).textContent = String(count);

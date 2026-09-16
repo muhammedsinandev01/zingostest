@@ -57,17 +57,27 @@ export function trapFocus(container) {
 }
 
 /** Locks body scroll while an overlay is open, without a layout jump. */
-let scrollLocks = 0;
-export function lockScroll() {
-  if (scrollLocks++ > 0) return;
-  const gap = window.innerWidth - document.documentElement.clientWidth;
-  document.body.style.paddingRight = gap > 0 ? `${gap}px` : '';
-  document.body.classList.add('is-locked');
+/**
+ * Locks by overlay name rather than by counting calls. A counter gets stuck
+ * the moment one overlay locks twice and unlocks once - which strands the
+ * page with `overflow: hidden` and no way for the customer to scroll. Names
+ * make a double lock a no-op, so the page can only stay locked while an
+ * overlay really is open.
+ */
+const scrollLocks = new Set();
+
+export function lockScroll(key = 'overlay') {
+  if (scrollLocks.has(key)) return;
+  if (scrollLocks.size === 0) {
+    const gap = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.paddingRight = gap > 0 ? `${gap}px` : '';
+    document.body.classList.add('is-locked');
+  }
+  scrollLocks.add(key);
 }
 
-export function unlockScroll() {
-  if (--scrollLocks > 0) return;
-  scrollLocks = 0;
+export function unlockScroll(key = 'overlay') {
+  if (!scrollLocks.delete(key) || scrollLocks.size > 0) return;
   document.body.style.paddingRight = '';
   document.body.classList.remove('is-locked');
 }

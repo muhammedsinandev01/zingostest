@@ -161,7 +161,7 @@ function close() {
   overlay.setAttribute('aria-hidden', 'true');
   releaseFocus?.();
   releaseFocus = null;
-  unlockScroll();
+  unlockScroll('product');
   state = null;
 }
 
@@ -226,7 +226,7 @@ export function openProductModal(productId) {
   state = { product, selection: defaultSelection(product), addons: new Set(), quantity: 1 };
   overlay.innerHTML = panelHtml(product);
   overlay.setAttribute('aria-hidden', 'false');
-  if (!wasOpen) lockScroll();
+  if (!wasOpen) lockScroll('product');
 
   // Next frame, so the opening transition actually runs.
   requestAnimationFrame(() => overlay.classList.add('is-open'));
