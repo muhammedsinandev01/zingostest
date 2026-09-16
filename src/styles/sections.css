@@ -1,0 +1,489 @@
+/* Featured, about, order CTA, location and footer ------------------------- */
+
+/* Fan favourites ----------------------------------------------------------- */
+.featured {
+  background: var(--white);
+  padding-block: 34px var(--section-y);
+}
+
+.featured__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.featured__head .btn {
+  flex: none;
+}
+
+.featured-rail {
+  align-items: stretch;
+}
+
+/* The ZINGOS way ----------------------------------------------------------- */
+.about {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(155deg, var(--orange-bright), var(--orange) 45%, var(--orange-deep));
+  color: var(--white);
+}
+
+.about__grid {
+  display: grid;
+  gap: 1.6rem;
+}
+
+.about .section-kicker {
+  color: var(--char);
+}
+
+.about .section-title {
+  color: var(--white);
+}
+
+.about__lede {
+  margin-top: 0.7rem;
+  max-width: 46ch;
+  font-size: 0.97rem;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.about__points {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+
+.about__point {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 0.2rem 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--r);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.about__point svg {
+  grid-row: span 2;
+  width: 26px;
+  height: 26px;
+  color: var(--char);
+  align-self: center;
+}
+
+.about__point h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.02rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.about__point p {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.about__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 230px;
+}
+
+.about__art::before {
+  content: '';
+  position: absolute;
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.about__art img {
+  position: relative;
+  width: 280px;
+  filter: drop-shadow(0 24px 24px rgba(90, 25, 0, 0.4));
+}
+
+/* Order CTA band ----------------------------------------------------------- */
+.order-cta {
+  position: relative;
+  overflow: hidden;
+  background: var(--char);
+  color: var(--cream);
+  text-align: center;
+}
+
+.order-cta__inner {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 0.9rem;
+}
+
+.order-cta .section-kicker {
+  color: var(--orange-bright);
+}
+
+.order-cta h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 9vw, 4.4rem);
+  line-height: 0.94;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.order-cta h2 em {
+  font-style: normal;
+  color: var(--orange-bright);
+}
+
+.order-cta p {
+  max-width: 46ch;
+  font-size: 0.93rem;
+  color: rgba(255, 246, 238, 0.72);
+}
+
+.order-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 0.4rem;
+}
+
+.order-cta img.floater {
+  position: absolute;
+  width: 130px;
+  opacity: 0.85;
+  filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+.order-cta img.floater--left {
+  left: -8%;
+  bottom: -10%;
+  transform: rotate(-8deg);
+}
+
+.order-cta img.floater--right {
+  right: -8%;
+  top: -12%;
+  transform: rotate(10deg);
+}
+
+/* Location ----------------------------------------------------------------- */
+.location__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.location__card {
+  padding: 1.2rem;
+  border-radius: var(--r-lg);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--line), var(--shadow-sm);
+  display: grid;
+  align-content: start;
+  gap: 1.1rem;
+}
+
+.location__row {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.location__icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--orange-wash);
+  color: var(--orange-ink);
+}
+
+.location__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.location__row h3 {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.1rem;
+}
+
+.location__row p,
+.location__row a {
+  font-size: 0.97rem;
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.location__row a:hover {
+  color: var(--orange);
+}
+
+.location__row .placeholder {
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.location__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.location__actions .btn {
+  flex: 1 1 150px;
+}
+
+.location__panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: linear-gradient(150deg, var(--orange-bright), var(--orange-deep));
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 2rem 1.4rem;
+  color: var(--white);
+  min-height: 220px;
+}
+
+.location__panel > * {
+  position: relative;
+}
+
+.location__panel img {
+  width: 140px;
+  margin-inline: auto;
+  margin-bottom: 0.9rem;
+}
+
+.location__panel h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.location__panel p {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 32ch;
+  margin-inline: auto;
+}
+
+/* Footer ------------------------------------------------------------------- */
+.footer {
+  position: relative;
+  overflow: hidden;
+  background: var(--char);
+  color: rgba(255, 246, 238, 0.68);
+  padding-block: 36px 20px;
+}
+
+.footer__grid {
+  position: relative;
+  display: grid;
+  gap: 1.8rem;
+}
+
+.footer__brand img {
+  width: 150px;
+  margin-bottom: 0.8rem;
+}
+
+.footer__tagline {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--orange-bright);
+}
+
+.footer__brand p {
+  margin-top: 0.5rem;
+  font-size: 0.86rem;
+  max-width: 36ch;
+}
+
+.footer__cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.6rem;
+}
+
+.footer h3 {
+  margin-bottom: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.footer li + li {
+  margin-top: 0.5rem;
+}
+
+.footer a,
+.footer button {
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.footer a:hover,
+.footer button:hover {
+  color: var(--orange-bright);
+}
+
+.footer__social {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.2rem;
+}
+
+.footer__social a {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--cream);
+  transition: background-color 0.2s, transform 0.2s var(--ease-back);
+}
+
+.footer__social a:hover {
+  background: var(--orange);
+  color: var(--white);
+  transform: translateY(-2px);
+}
+
+.footer__social svg {
+  width: 19px;
+  height: 19px;
+}
+
+.footer__bottom {
+  position: relative;
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 1.8rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.78rem;
+  color: rgba(255, 246, 238, 0.45);
+}
+
+/* Keep the floating cart bar clear of the footer on phones. */
+body.has-cart-bar .footer {
+  padding-bottom: 5.5rem;
+}
+
+/* Responsive --------------------------------------------------------------- */
+@media (min-width: 720px) {
+  .about__grid {
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: center;
+    gap: 2.5rem;
+  }
+
+  .about__points {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about__point {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    padding: 1.1rem;
+  }
+
+  .about__point svg {
+    grid-row: auto;
+  }
+
+  .about__art {
+    height: 340px;
+  }
+
+  .about__art::before {
+    width: 330px;
+    height: 330px;
+  }
+
+  .about__art img {
+    width: 400px;
+  }
+
+  .location__grid {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 1.4rem;
+  }
+
+  .location__card {
+    padding: 1.8rem;
+  }
+
+  .order-cta img.floater {
+    width: 190px;
+  }
+
+  .order-cta img.floater--left {
+    left: -2%;
+  }
+
+  .order-cta img.floater--right {
+    right: -2%;
+  }
+
+  .footer__grid {
+    grid-template-columns: 1.3fr 1.7fr;
+    gap: 2.5rem;
+  }
+
+  .footer__cols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .footer__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+  }
+
+  body.has-cart-bar .footer {
+    padding-bottom: 20px;
+  }
+}
+
+/* The cart link in the footer is a button; strip the UA padding so it lines
+   up with the anchors beside it. */
+.footer__cols button {
+  padding: 0;
+  text-align: left;
+}
