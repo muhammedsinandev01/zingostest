@@ -8,11 +8,18 @@
  * The receiving number lives in src/config.js - nowhere else.
  */
 
-import { CONFIG, whatsappNumber, isPlaceholder } from '../config.js';
+import { CONFIG, whatsappNumber, isPlaceholder, deliveryZones } from '../config.js';
 import { formatAmount } from './formatCurrency.js';
 import { unitPrice, lineTotal } from './cart.js';
 
-const RULE = '━━━━━━━━━━━━━━';
+const money = (amount) => `${CONFIG.currency}${formatAmount(amount)}`;
+
+/** Short delivery-zone tag for the message, e.g. "more than 5 km (₹40)". */
+const zoneTag = (zoneId) => {
+  const zone = deliveryZones().find((entry) => entry.id === zoneId);
+  if (!zone) return 'distance to be confirmed';
+  return `${zone.label.toLowerCase()} (${zone.fee ? money(zone.fee) : 'free'})`;
+};
 
 /** Pretty-prints an Indian mobile number: +91 98765 43210. */
 export function formatPhone(raw) {
@@ -26,65 +33,57 @@ export function formatPhone(raw) {
 /**
  * Builds the order message. Plain text with WhatsApp's *bold* markers - no
  * HTML, no markdown beyond what WhatsApp itself renders.
+ *
+ * Kept deliberately tight: the kitchen reads this on a phone mid-service, so
+ * every detail earns its line and a typical order fits on one screen without
+ * scrolling. Blank lines separate the four blocks - who, what, money, notes.
  */
 export function buildOrderMessage({ items, customer, subtotal, deliveryFee, total }) {
-  const lines = [];
+  const isDelivery = customer.orderType === 'delivery';
+  const lines = ['🍗 *NEW ZINGOS ORDER*', ''];
 
-  lines.push('🍗 *NEW ZINGOS ORDER*', '', RULE, '');
+  /* Who it is and how it leaves the kitchen -------------------------------- */
+  lines.push(`👤 *${customer.name}*  📞 ${formatPhone(customer.phone)}`);
 
-  lines.push('👤 *CUSTOMER*');
-  lines.push(`Name: ${customer.name}`);
-  lines.push(`Phone: ${formatPhone(customer.phone)}`);
-  lines.push('');
-
-  lines.push('📦 *ORDER TYPE*');
-  lines.push(customer.orderType === 'delivery' ? 'Delivery' : 'Pickup');
-  lines.push('');
-
-  if (customer.orderType === 'delivery') {
-    lines.push('📍 *DELIVERY ADDRESS*');
-    lines.push(customer.address);
-    if (customer.landmark) lines.push(`Landmark: ${customer.landmark}`);
-    if (customer.area) lines.push(`Area: ${customer.area}`);
-    lines.push('');
+  if (isDelivery) {
+    lines.push(`🛵 *Delivery* · ${zoneTag(customer.deliveryZone)}`);
+    const where = [customer.address, customer.landmark, customer.area].filter(Boolean).join(' · ');
+    lines.push(`📍 ${where}`);
+  } else {
+    lines.push('🥡 *Pickup*');
   }
 
-  lines.push(RULE, '', '🛒 *ORDER*', '');
+  /* What to cook ----------------------------------------------------------- */
+  lines.push('', '🛒 *ORDER*');
 
   for (const item of items) {
-    lines.push(`${item.quantity} × ${item.name}`);
-    if (item.variant) lines.push(item.variant);
-    for (const addon of item.addons || []) {
-      lines.push(`+ ${addon.name} (${CONFIG.currency}${formatAmount(addon.price)})`);
-    }
-    if ((item.addons || []).length) {
-      lines.push(`${CONFIG.currency}${formatAmount(unitPrice(item))} each`);
-    }
-    lines.push(`${CONFIG.currency}${formatAmount(lineTotal(item))}`);
-    lines.push('');
+    lines.push(`• ${item.quantity} × ${item.name} — ${money(lineTotal(item))}`);
+
+    // Variant, add-ons and (only where the maths is not obvious) unit price,
+    // folded onto one indented line instead of three.
+    const detail = [];
+    if (item.variant) detail.push(item.variant);
+    if (item.addons?.length) detail.push(`+ ${item.addons.map((addon) => addon.name).join(', ')}`);
+    if (item.addons?.length && item.quantity > 1) detail.push(`${money(unitPrice(item))} ea`);
+    if (detail.length) lines.push(`   ${detail.join(' · ')}`);
   }
 
-  lines.push(RULE, '');
-  lines.push(`Subtotal: ${CONFIG.currency}${formatAmount(subtotal)}`);
-  if (customer.orderType === 'delivery') {
-    lines.push(
+  /* Money ------------------------------------------------------------------ */
+  const totals = [`Subtotal ${money(subtotal)}`];
+  if (isDelivery) {
+    totals.push(
       deliveryFee > 0
-        ? `Delivery: ${CONFIG.currency}${formatAmount(deliveryFee)}`
-        : 'Delivery: to be confirmed by the restaurant',
+        ? `Delivery ${money(deliveryFee)}`
+        : customer.deliveryZone
+          ? 'Delivery free'
+          : 'Delivery to confirm',
     );
   }
-  lines.push('');
-  lines.push(`💰 *TOTAL: ${CONFIG.currency}${formatAmount(total)}*`);
-  if (customer.orderType === 'delivery' && deliveryFee === 0) {
-    lines.push('_(excludes delivery charge)_');
-  }
-  lines.push('');
+  lines.push('', totals.join(' · '));
+  lines.push(`💰 *TOTAL: ${money(total)}*`);
 
-  if (customer.notes) {
-    lines.push(RULE, '', '📝 *SPECIAL INSTRUCTIONS*', customer.notes, '');
-  }
-
-  lines.push(RULE, '', 'Thank you for ordering from ZINGOS! 🍗🔥');
+  /* Anything the customer asked for ---------------------------------------- */
+  if (customer.notes) lines.push('', `📝 ${customer.notes}`);
 
   return lines.join('\n');
 }

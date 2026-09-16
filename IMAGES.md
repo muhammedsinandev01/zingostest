@@ -111,12 +111,12 @@ Everything in `src/config.js` is filled in except:
 
 - **Facebook page URL** — `facebookUrl`. Until it's set, only the Instagram
   icon shows in the footer.
-- **Delivery fee** — `deliveryFee`, currently `0`, which makes the cart say
-  "delivery fee will be confirmed by the restaurant".
+Delivery pricing is set: free within 5 km, ₹40 beyond that
+(`delivery.freeWithinKm` / `delivery.feeBeyond`).
 
 Already set: address (Alakode Road, Manna Road, Taliparamba, Kerala 670141),
 phone `+91 92921 71777`, WhatsApp `+91 95671 58313`, opening hours
-(every day, 3:00 PM – 2:00 AM), Google Maps link and Instagram.
+(every day, 4:00 PM – 2:00 AM), Google Maps link and Instagram.
 
 ---
 

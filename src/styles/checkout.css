@@ -379,3 +379,77 @@
   color: var(--ink);
   opacity: 1;
 }
+
+/* Delivery distance zones --------------------------------------------------
+   The site cannot measure distance, so the customer picks their band and the
+   charge follows immediately in the totals. */
+.zone-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 56px;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--r-sm);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  cursor: pointer;
+  transition: box-shadow 0.2s, background-color 0.2s;
+}
+
+.zone input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.zone:has(input:checked) {
+  background: var(--orange-wash);
+  box-shadow: inset 0 0 0 2px var(--orange);
+}
+
+.zone input:checked ~ .option__mark {
+  border-color: var(--orange);
+}
+
+.zone input:checked ~ .option__mark::after {
+  transform: scale(1);
+}
+
+.zone input:focus-visible ~ .option__mark {
+  outline: 3px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.zone__text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.zone__note {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.zone__fee {
+  flex: none;
+  font-weight: 800;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.zone:has(input:checked) .zone__fee,
+.zone:has(input:checked) .zone__note {
+  color: var(--orange-ink);
+}

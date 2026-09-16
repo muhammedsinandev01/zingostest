@@ -34,24 +34,30 @@ export const CONFIG = {
   googleMapsUrl: 'https://maps.app.goo.gl/wvS1MwVQmmSS6Fux9',
 
   /** Shown on the site, in the customer's words. */
-  openingHours: 'Every day · 3:00 PM – 2:00 AM',
+  openingHours: 'Every day · 4:00 PM – 2:00 AM',
 
   /**
    * The same hours in schema.org notation, for the structured data only.
    * Format: '<days> <open>-<close>' on a 24-hour clock; a closing time
    * earlier than the opening time means it runs past midnight.
    */
-  openingHoursSpec: 'Mo-Su 15:00-02:00',
+  openingHoursSpec: 'Mo-Su 16:00-02:00',
 
   instagramUrl: 'https://www.instagram.com/zingosofficial',
   facebookUrl: '[FACEBOOK_URL]',
 
   /**
-   * Delivery fee in rupees, added to delivery orders only.
-   * Leave at 0 while the fee is not finalised - the cart then tells the
-   * customer the fee is confirmed by the restaurant instead of showing 0.
+   * Delivery charge by distance from the kitchen. A website cannot measure
+   * how far away a customer is, so they pick their zone at checkout and the
+   * total follows from these numbers.
+   *
+   *   freeWithinKm  delivery is free inside this radius
+   *   feeBeyond     rupees charged outside it (0 makes all delivery free)
    */
-  deliveryFee: 0,
+  delivery: {
+    freeWithinKm: 5,
+    feeBeyond: 40,
+  },
 
   /** Minimum order value for delivery, in rupees. 0 disables the check. */
   deliveryMinimum: 0,
@@ -62,6 +68,43 @@ export const CONFIG = {
 
   /** Used for canonical/Open Graph tags once the site has a domain. */
   siteUrl: '',
+};
+
+/* -------------------------------------------------------------------------- */
+/* Delivery                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The delivery zones the customer chooses between at checkout. Derived from
+ * CONFIG.delivery so the radius and the fee are only written down once.
+ */
+export const deliveryZones = () => {
+  const { freeWithinKm, feeBeyond } = CONFIG.delivery;
+  return [
+    {
+      id: 'near',
+      label: `Within ${freeWithinKm} km`,
+      note: 'Free delivery',
+      fee: 0,
+    },
+    {
+      id: 'far',
+      label: `More than ${freeWithinKm} km`,
+      note: `${CONFIG.currency}${feeBeyond} delivery charge`,
+      fee: Math.max(0, Math.round(feeBeyond) || 0),
+    },
+  ];
+};
+
+/** Fee in rupees for a zone id. Unknown zone means nothing is charged yet. */
+export const deliveryFeeForZone = (zoneId) =>
+  deliveryZones().find((zone) => zone.id === zoneId)?.fee ?? 0;
+
+/** One-line summary of the rule, e.g. "Free within 5 km · ₹40 beyond that". */
+export const deliveryPolicyText = () => {
+  const { freeWithinKm, feeBeyond } = CONFIG.delivery;
+  if (!feeBeyond) return `Free delivery everywhere we deliver`;
+  return `Free within ${freeWithinKm} km · ${CONFIG.currency}${feeBeyond} beyond that`;
 };
 
 /** True when a config value is still an unfilled placeholder. */

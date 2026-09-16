@@ -4,7 +4,7 @@
  * only - nothing personal is written to localStorage.
  */
 
-import { CONFIG } from '../config.js';
+import { CONFIG, deliveryZones, deliveryPolicyText } from '../config.js';
 import { getItems, subtotal, deliveryFee, lineTotal, unitPrice } from '../utils/cart.js';
 import { formatCurrency } from '../utils/formatCurrency.js';
 import { buildOrderMessage, isWhatsAppConfigured, formatPhone } from '../utils/whatsapp.js';
@@ -16,6 +16,7 @@ export const draft = {
   name: '',
   phone: '',
   orderType: '',
+  deliveryZone: '',
   address: '',
   landmark: '',
   area: '',
@@ -52,6 +53,9 @@ export function validate(values) {
   }
 
   if (values.orderType === 'delivery') {
+    if (!values.deliveryZone) {
+      errors.deliveryZone = 'Tell us roughly how far you are so we can work out the delivery charge.';
+    }
     if (!values.address || values.address.trim().length < 8) {
       errors.address = 'Add the full delivery address, including house or flat number.';
     }
@@ -118,6 +122,31 @@ export function checkoutHtml() {
       </div>
 
       <div class="delivery-fields" data-delivery-fields ${draft.orderType === 'delivery' ? '' : 'hidden'}>
+        <div class="field" data-field="deliveryZone">
+          <span class="field__label" id="delivery-zone-label">
+            Distance from us <span class="req" aria-hidden="true">*</span>
+          </span>
+          <div class="zone-list" role="radiogroup" aria-labelledby="delivery-zone-label">
+            ${deliveryZones()
+              .map(
+                (zone) => `
+              <label class="zone">
+                <input type="radio" name="deliveryZone" value="${zone.id}"
+                       ${draft.deliveryZone === zone.id ? 'checked' : ''} />
+                <span class="option__mark" aria-hidden="true"></span>
+                <span class="zone__text">
+                  ${escapeHtml(zone.label)}
+                  <span class="zone__note">${escapeHtml(zone.note)}</span>
+                </span>
+                <span class="zone__fee">${zone.fee ? formatCurrency(zone.fee) : 'Free'}</span>
+              </label>`,
+              )
+              .join('')}
+          </div>
+          <p class="field__hint">Not sure? Pick the closest — we confirm it on WhatsApp.</p>
+          <p class="field__error" id="deliveryZone-error" data-error></p>
+        </div>
+
         ${field({
           id: 'address',
           label: 'Delivery address',
@@ -154,6 +183,7 @@ export function readForm(form) {
   draft.name = String(data.get('name') ?? '').trim();
   draft.phone = String(data.get('phone') ?? '').trim();
   draft.orderType = String(data.get('orderType') ?? '');
+  draft.deliveryZone = String(data.get('deliveryZone') ?? '');
   draft.address = String(data.get('address') ?? '').trim();
   draft.landmark = String(data.get('landmark') ?? '').trim();
   draft.area = String(data.get('area') ?? '').trim();
@@ -180,12 +210,18 @@ export function showErrors(form, errors) {
 /* Review                                                                      */
 /* -------------------------------------------------------------------------- */
 
+/** Human label for a chosen delivery zone, e.g. "Within 5 km · Free delivery". */
+export const zoneLabel = (zoneId) => {
+  const zone = deliveryZones().find((entry) => entry.id === zoneId);
+  return zone ? `${zone.label} · ${zone.note}` : 'To be confirmed';
+};
+
 /** Everything the review screen and the WhatsApp message are built from. */
 export function buildOrder() {
   const customer = { ...draft, phone: normalizePhone(draft.phone).digits };
   const items = getItems();
   const sub = subtotal();
-  const fee = deliveryFee(customer.orderType);
+  const fee = deliveryFee(customer.orderType, customer.deliveryZone);
   return { items, customer, subtotal: sub, deliveryFee: fee, total: sub + fee };
 }
 
@@ -220,6 +256,11 @@ export function reviewHtml(order) {
           <dt>Name</dt><dd>${escapeHtml(customer.name)}</dd>
           <dt>Phone</dt><dd>${escapeHtml(formatPhone(customer.phone))}</dd>
           <dt>Order</dt><dd>${isDelivery ? 'Delivery' : 'Pickup'}</dd>
+          ${
+            isDelivery
+              ? `<dt>Distance</dt><dd>${escapeHtml(zoneLabel(customer.deliveryZone))}</dd>`
+              : ''
+          }
           ${isDelivery ? `<dt>Address</dt><dd>${escapeHtml(customer.address)}</dd>` : ''}
           ${isDelivery && customer.landmark ? `<dt>Landmark</dt><dd>${escapeHtml(customer.landmark)}</dd>` : ''}
           ${isDelivery && customer.area ? `<dt>Area</dt><dd>${escapeHtml(customer.area)}</dd>` : ''}

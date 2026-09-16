@@ -19,7 +19,7 @@
  * }
  */
 
-import { CONFIG } from '../config.js';
+import { deliveryFeeForZone } from '../config.js';
 
 const STORAGE_KEY = 'zingos.cart.v1';
 
@@ -145,12 +145,11 @@ export const itemCount = () => items.reduce((sum, item) => sum + item.quantity, 
 export const subtotal = () => items.reduce((sum, item) => sum + lineTotal(item), 0);
 
 /**
- * Delivery fee for the current order type. Returns 0 for pickup, and for
- * delivery returns the configured fee - which stays 0 until the restaurant
- * sets one, in which case the UI says the fee is confirmed on the order.
+ * Delivery fee in rupees. Pickup is always 0; delivery depends on which
+ * distance zone the customer picked at checkout (see CONFIG.delivery).
  */
-export const deliveryFee = (orderType) =>
-  orderType === 'delivery' ? Math.max(0, Math.round(CONFIG.deliveryFee) || 0) : 0;
+export const deliveryFee = (orderType, zone) =>
+  orderType === 'delivery' ? deliveryFeeForZone(zone) : 0;
 
 export const isEmpty = () => items.length === 0;
 

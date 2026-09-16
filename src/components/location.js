@@ -1,4 +1,4 @@
-import { CONFIG, isPlaceholder, fullAddress } from '../config.js';
+import { CONFIG, isPlaceholder, fullAddress, deliveryPolicyText } from '../config.js';
 import { telHref, formatPhone } from '../utils/whatsapp.js';
 import { escapeHtml } from '../utils/dom.js';
 import { icons } from './icons.js';
@@ -96,6 +96,7 @@ export function renderLocation(root) {
               Choose at checkout. Your order goes straight to the kitchen on WhatsApp,
               and we confirm the timing on chat.
             </p>
+            <p class="location__policy">${icons.scooter} ${deliveryPolicyText()}</p>
           </div>
         </div>
       </div>

@@ -487,3 +487,23 @@ body.has-cart-bar .footer {
   padding: 0;
   text-align: left;
 }
+
+/* Delivery rule, shown in the location panel before anyone reaches checkout. */
+.location__policy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--pill);
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.location__policy svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}

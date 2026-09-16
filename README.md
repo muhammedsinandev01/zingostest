@@ -38,7 +38,7 @@ server.
 | **WhatsApp number orders go to** | `src/config.js` | `whatsappNumber` — digits only with country code, e.g. `919567158313` |
 | Phone, address, opening hours | `src/config.js` | `phone`, `address`, `openingHours` |
 | Google Maps / Instagram / Facebook links | `src/config.js` | `googleMapsUrl`, `instagramUrl`, `facebookUrl` |
-| **Delivery fee** | `src/config.js` | `deliveryFee` (rupees). Leave at `0` and the cart says the fee is confirmed by the restaurant |
+| **Delivery charge** | `src/config.js` | `delivery.freeWithinKm` and `delivery.feeBeyond` — free inside the radius, that many rupees outside it |
 | Minimum order for delivery | `src/config.js` | `deliveryMinimum` (0 = off) |
 | **Menu items and prices** | `src/data/menu.js` | see below |
 | Product photos | `public/images/products/` | see [IMAGES.md](IMAGES.md) |
@@ -108,9 +108,10 @@ only one place where money is calculated.
 
 All of it is in `src/utils/whatsapp.js`.
 
-1. The customer fills in name, phone, pickup/delivery (+ address) and any notes.
+1. The customer fills in name, phone, pickup/delivery (+ address and which
+   distance band they are in) and any notes.
 2. `buildOrderMessage()` formats a plain-text order with WhatsApp `*bold*`
-   markers.
+   markers, kept tight enough that a normal order fits on one phone screen.
 3. `buildWhatsAppUrl()` URL-encodes it onto `https://wa.me/<number>?text=…` —
    the official Click-to-Chat link. On a phone that opens the WhatsApp app; on
    a desktop it opens WhatsApp Web.

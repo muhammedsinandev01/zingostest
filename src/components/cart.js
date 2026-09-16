@@ -6,7 +6,7 @@
  * menu behind them.
  */
 
-import { CONFIG } from '../config.js';
+import { CONFIG, deliveryPolicyText } from '../config.js';
 import {
   subscribe,
   getItems,
@@ -97,24 +97,27 @@ const lineHtml = (item) => `
     </div>
   </article>`;
 
-function totalsHtml({ showDelivery, orderType }) {
-  const fee = deliveryFee(orderType);
+function totalsHtml({ showDelivery, orderType, zone }) {
   const sub = subtotal();
+  const isDelivery = showDelivery && orderType === 'delivery';
+  const fee = isDelivery ? deliveryFee(orderType, zone) : 0;
+
+  let deliveryRow = '';
+  if (isDelivery && zone) {
+    deliveryRow = fee
+      ? `<div class="cart-totals__row"><span>Delivery</span><span>${formatCurrency(fee)}</span></div>`
+      : `<div class="cart-totals__row"><span>Delivery</span><span>Free</span></div>`;
+  } else if (isDelivery) {
+    // Order type chosen but not the distance yet.
+    deliveryRow = `<div class="cart-totals__row cart-totals__row--note"><span>${deliveryPolicyText()}</span><span>—</span></div>`;
+  } else if (!showDelivery) {
+    deliveryRow = `<div class="cart-totals__row cart-totals__row--note"><span>Delivery: ${deliveryPolicyText().toLowerCase()}</span><span></span></div>`;
+  }
+
   return `
     <div class="cart-totals">
       <div class="cart-totals__row"><span>Subtotal</span><span>${formatCurrency(sub)}</span></div>
-      ${
-        showDelivery && orderType === 'delivery'
-          ? fee > 0
-            ? `<div class="cart-totals__row"><span>Delivery</span><span>${formatCurrency(fee)}</span></div>`
-            : `<div class="cart-totals__row cart-totals__row--note"><span>Delivery fee will be confirmed by the restaurant</span><span>—</span></div>`
-          : ''
-      }
-      ${
-        !showDelivery
-          ? `<div class="cart-totals__row cart-totals__row--note"><span>Delivery fee, if any, is confirmed by the restaurant</span><span></span></div>`
-          : ''
-      }
+      ${deliveryRow}
       <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${formatCurrency(sub + fee)}</span></div>
     </div>`;
 }
@@ -154,7 +157,7 @@ function footHtml() {
   if (step === 'checkout') {
     return `
       <div class="overlay__foot">
-        ${totalsHtml({ showDelivery: true, orderType: draft.orderType })}
+        ${totalsHtml({ showDelivery: true, orderType: draft.orderType, zone: draft.deliveryZone })}
         <button class="btn btn--block btn--lg" type="button" data-go="review">
           Review order ${icons.arrowRight}
         </button>
@@ -164,7 +167,7 @@ function footHtml() {
   if (step === 'review') {
     return `
       <div class="overlay__foot">
-        ${totalsHtml({ showDelivery: true, orderType: draft.orderType })}
+        ${totalsHtml({ showDelivery: true, orderType: draft.orderType, zone: draft.deliveryZone })}
         <button class="btn btn--block btn--lg" type="button" data-send>
           ${icons.whatsapp} Order on WhatsApp
         </button>
@@ -292,20 +295,27 @@ function ensureOverlay() {
     }
   });
 
+  const refreshTotals = () => {
+    const totals = qs('.overlay__foot .cart-totals', overlay);
+    totals?.replaceWith(
+      document.createRange().createContextualFragment(
+        totalsHtml({ showDelivery: true, orderType: draft.orderType, zone: draft.deliveryZone }),
+      ),
+    );
+  };
+
   // Show or hide the delivery-only fields as the order type changes.
   on(overlay, 'change', 'input[name="orderType"]', (event, input) => {
     draft.orderType = input.value;
     const fields = qs('[data-delivery-fields]', overlay);
     if (fields) fields.hidden = input.value !== 'delivery';
-    const foot = qs('.overlay__foot', overlay);
-    if (foot) {
-      const totals = qs('.cart-totals', foot);
-      totals?.replaceWith(
-        document
-          .createRange()
-          .createContextualFragment(totalsHtml({ showDelivery: true, orderType: input.value })),
-      );
-    }
+    refreshTotals();
+  });
+
+  // Picking a distance zone changes the delivery charge immediately.
+  on(overlay, 'change', 'input[name="deliveryZone"]', (event, input) => {
+    draft.deliveryZone = input.value;
+    refreshTotals();
   });
 
   overlay.addEventListener('keydown', (event) => {
