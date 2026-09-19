@@ -33,6 +33,26 @@ export const CONFIG = {
   /** Paste the "Share > Copy link" URL from Google Maps. */
   googleMapsUrl: 'https://maps.app.goo.gl/wvS1MwVQmmSS6Fux9',
 
+  /**
+   * The kitchen's exact pin. EVERY delivery charge is measured from here, so
+   * this has to be the real spot - not the road, not the junction nearby.
+   *
+   * To fill it in: open Google Maps, right-click exactly on ZINGOS, and click
+   * the latitude/longitude numbers at the top of the menu that appears. That
+   * copies them. Paste them below as plain numbers.
+   *
+   *   lat: 12.038512,
+   *   lng: 75.360194,
+   *
+   * Until both are real numbers the site cannot measure distance, so checkout
+   * quietly falls back to letting the customer pick their own distance band
+   * rather than charging anyone a made-up fee.
+   */
+  coordinates: {
+    lat: 12.043683,
+    lng: 75.368887,
+  },
+
   /** Shown on the site, in the customer's words. */
   openingHours: 'Every day · 4:00 PM – 2:00 AM',
 
@@ -47,16 +67,38 @@ export const CONFIG = {
   facebookUrl: '[FACEBOOK_URL]',
 
   /**
-   * Delivery charge by distance from the kitchen. A website cannot measure
-   * how far away a customer is, so they pick their zone at checkout and the
-   * total follows from these numbers.
+   * Delivery charge by distance from the kitchen.
    *
-   *   freeWithinKm  delivery is free inside this radius
-   *   feeBeyond     rupees charged outside it (0 makes all delivery free)
+   * The customer drops a pin on a map at checkout, the site measures how far
+   * that pin is from CONFIG.coordinates, and the first band it falls inside
+   * sets the charge. Bands are read top to bottom, so keep them in order.
+   *
+   *   withinKm  the outer edge of the band, in kilometres
+   *   fee       rupees charged inside it
+   *
+   * The last band must have `withinKm: null` - it is the catch-all for
+   * everything further out.
    */
   delivery: {
-    freeWithinKm: 5,
-    feeBeyond: 40,
+    bands: [
+      { withinKm: 5, fee: 0 },
+      { withinKm: 10, fee: 40 },
+      { withinKm: null, fee: 80 },
+    ],
+
+    /**
+     * Furthest the kitchen will deliver, in kilometres. A pin beyond this is
+     * refused at checkout instead of being quoted a fee. null = no limit.
+     */
+    maxKm: null,
+
+    /**
+     * Distance is measured as the crow flies, which is always a little less
+     * than the road. Raise this above 1 to bill closer to real driving
+     * distance - 1.3 adds a typical 30% road allowance. Left at 1, a customer
+     * 4.9 km away in a straight line is charged as 4.9 km.
+     */
+    roadFactor: 1,
   },
 
   /** Minimum order value for delivery, in rupees. 0 disables the check. */
@@ -74,37 +116,87 @@ export const CONFIG = {
 /* Delivery                                                                    */
 /* -------------------------------------------------------------------------- */
 
+/** The bands from CONFIG, guaranteed non-empty and ending in a catch-all. */
+const bands = () => {
+  const list = (CONFIG.delivery.bands ?? []).filter(
+    (band) => band && Number.isFinite(band.fee) && band.fee >= 0,
+  );
+  if (!list.length) return [{ withinKm: null, fee: 0 }];
+  // The furthest band always catches everything past the one before it, even
+  // if someone edits config.js and forgets the trailing null.
+  return [...list.slice(0, -1), { ...list[list.length - 1], withinKm: null }];
+};
+
+/** True once the kitchen's pin is filled in and distance can be measured. */
+export const hasShopCoordinates = () => {
+  const { lat, lng } = CONFIG.coordinates ?? {};
+  return (
+    Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+  );
+};
+
+/** The kitchen's pin, or null while config.js still has the TODO. */
+export const shopCoordinates = () =>
+  hasShopCoordinates() ? { lat: CONFIG.coordinates.lat, lng: CONFIG.coordinates.lng } : null;
+
+/** The band a distance falls into, e.g. { withinKm: 10, fee: 40 }. */
+export const bandForDistance = (km) => {
+  if (!Number.isFinite(km)) return null;
+  const list = bands();
+  return list.find((band) => band.withinKm === null || km <= band.withinKm) ?? list[list.length - 1];
+};
+
+/** Delivery charge in rupees for a measured distance. */
+export const feeForDistance = (km) => bandForDistance(km)?.fee ?? 0;
+
+/** True when a pin is further out than the kitchen is willing to drive. */
+export const isBeyondDeliveryRange = (km) => {
+  const { maxKm } = CONFIG.delivery;
+  return Number.isFinite(maxKm) && maxKm > 0 && Number.isFinite(km) && km > maxKm;
+};
+
 /**
- * The delivery zones the customer chooses between at checkout. Derived from
- * CONFIG.delivery so the radius and the fee are only written down once.
+ * The distance bands as pickable options, for the customer who cannot or will
+ * not drop a pin. Same numbers as the map path, written out in words.
  */
 export const deliveryZones = () => {
-  const { freeWithinKm, feeBeyond } = CONFIG.delivery;
-  return [
-    {
-      id: 'near',
-      label: `Within ${freeWithinKm} km`,
-      note: 'Free delivery',
-      fee: 0,
-    },
-    {
-      id: 'far',
-      label: `More than ${freeWithinKm} km`,
-      note: `${CONFIG.currency}${feeBeyond} delivery charge`,
-      fee: Math.max(0, Math.round(feeBeyond) || 0),
-    },
-  ];
+  const list = bands();
+  return list.map((band, index) => {
+    const from = index === 0 ? 0 : list[index - 1].withinKm;
+    const label =
+      band.withinKm !== null
+        ? index === 0
+          ? `Within ${band.withinKm} km`
+          : `${from} – ${band.withinKm} km`
+        : index === 0
+          ? 'Any distance' // a single catch-all band: there is nothing to be "beyond"
+          : `More than ${from} km`;
+    return {
+      id: band.withinKm === null ? 'beyond' : `upto-${band.withinKm}`,
+      label,
+      note: band.fee ? `${CONFIG.currency}${band.fee} delivery charge` : 'Free delivery',
+      fee: Math.max(0, Math.round(band.fee) || 0),
+      withinKm: band.withinKm,
+    };
+  });
 };
 
 /** Fee in rupees for a zone id. Unknown zone means nothing is charged yet. */
 export const deliveryFeeForZone = (zoneId) =>
   deliveryZones().find((zone) => zone.id === zoneId)?.fee ?? 0;
 
-/** One-line summary of the rule, e.g. "Free within 5 km · ₹40 beyond that". */
+/** One-line summary of the rule, e.g. "Free within 5 km · ₹40 · ₹80". */
 export const deliveryPolicyText = () => {
-  const { freeWithinKm, feeBeyond } = CONFIG.delivery;
-  if (!feeBeyond) return `Free delivery everywhere we deliver`;
-  return `Free within ${freeWithinKm} km · ${CONFIG.currency}${feeBeyond} beyond that`;
+  const list = deliveryZones();
+  const free = list.find((zone) => zone.fee === 0);
+  const paid = list.filter((zone) => zone.fee > 0);
+  if (!paid.length) return 'Free delivery everywhere we deliver';
+  const head = free ? `Free within ${free.withinKm} km` : null;
+  const rest = paid.map(
+    (zone) =>
+      `${CONFIG.currency}${zone.fee} ${zone.withinKm === null ? `beyond ${list[list.length - 2]?.withinKm ?? ''} km` : `to ${zone.withinKm} km`}`,
+  );
+  return [head, ...rest].filter(Boolean).join(' · ');
 };
 
 /** True when a config value is still an unfilled placeholder. */

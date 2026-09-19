@@ -4,11 +4,12 @@
  * only - nothing personal is written to localStorage.
  */
 
-import { CONFIG, deliveryZones, deliveryPolicyText } from '../config.js';
+import { CONFIG, deliveryZones, hasShopCoordinates } from '../config.js';
 import { getItems, subtotal, deliveryFee, lineTotal, unitPrice } from '../utils/cart.js';
 import { formatCurrency } from '../utils/formatCurrency.js';
 import { buildOrderMessage, isWhatsAppConfigured, formatPhone } from '../utils/whatsapp.js';
 import { escapeHtml, qs, qsa } from '../utils/dom.js';
+import { formatKm } from '../utils/distance.js';
 import { icons } from './icons.js';
 
 /** In-memory draft, so moving between steps does not lose what was typed. */
@@ -21,6 +22,21 @@ export const draft = {
   landmark: '',
   area: '',
   notes: '',
+
+  /**
+   * The pin the customer dropped on the map, once they confirm it:
+   * { lat, lng, km, distanceText, fee, mapsUrl, coordsText }.
+   *
+   * Null means they have not used the map - either because they chose a
+   * distance band by hand instead, or because the kitchen has no coordinates
+   * configured. It is not a form field, so readForm leaves it alone.
+   */
+  location: null,
+};
+
+/** Clears the pin. Used when the customer picks a distance band by hand. */
+export const clearDraftLocation = () => {
+  draft.location = null;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -53,8 +69,13 @@ export function validate(values) {
   }
 
   if (values.orderType === 'delivery') {
-    if (!values.deliveryZone) {
-      errors.deliveryZone = 'Tell us roughly how far you are so we can work out the delivery charge.';
+    // A pin is the preferred answer, but a hand-picked distance band is a
+    // valid one too - some customers cannot or will not use a map.
+    if (!values.location && !values.deliveryZone) {
+      errors.location = hasShopCoordinates()
+        ? 'Pin your location on the map so we can work out the delivery charge.'
+        : 'Tell us roughly how far you are so we can work out the delivery charge.';
+      errors.deliveryZone = errors.location;
     }
     if (!values.address || values.address.trim().length < 8) {
       errors.address = 'Add the full delivery address, including house or flat number.';
@@ -78,6 +99,105 @@ const field = ({ id, label, required, input, hint }) => `
     ${hint ? `<p class="field__hint">${hint}</p>` : ''}
     <p class="field__error" id="${id}-error" data-error></p>
   </div>`;
+
+/* -------------------------------------------------------------------------- */
+/* Delivery location                                                           */
+/* -------------------------------------------------------------------------- */
+
+/** The confirmed pin, shown as a card with its distance and charge. */
+const pinnedLocationHtml = (location) => `
+  <div class="loc-card" data-state="${location.fee ? 'paid' : 'free'}">
+    <div class="loc-card__head">
+      <span class="loc-card__icon">${icons.pin}</span>
+      <div class="loc-card__title">
+        <strong>Location pinned</strong>
+        <em>${escapeHtml(location.coordsText)}</em>
+      </div>
+      <button class="loc-card__change" type="button" data-open-map>Change</button>
+    </div>
+
+    <dl class="loc-card__stats">
+      <div>
+        <dt>Distance</dt>
+        <dd>${escapeHtml(location.distanceText)}</dd>
+      </div>
+      <div>
+        <dt>Delivery</dt>
+        <dd>${location.fee ? formatCurrency(location.fee) : 'Free'}</dd>
+      </div>
+    </dl>
+
+    ${
+      location.mapsUrl
+        ? `<a class="loc-card__link" href="${escapeHtml(location.mapsUrl)}" target="_blank" rel="noopener noreferrer">
+             ${icons.map} Open in Google Maps
+           </a>`
+        : ''
+    }
+  </div>`;
+
+/** The call to action shown before any pin exists. */
+const pickLocationHtml = () => `
+  <button class="loc-pick" type="button" data-open-map>
+    <span class="loc-pick__icon">${icons.map}</span>
+    <span class="loc-pick__text">
+      <strong>Pin your location</strong>
+      <em>We work out the delivery charge from it</em>
+    </span>
+    <span class="loc-pick__go">${icons.arrowRight}</span>
+  </button>`;
+
+/** The hand-picked distance bands: fallback when the map is not an option. */
+const zoneListHtml = () => `
+  <div class="zone-list" role="radiogroup" aria-label="Distance from us">
+    ${deliveryZones()
+      .map(
+        (zone) => `
+      <label class="zone">
+        <input type="radio" name="deliveryZone" value="${zone.id}"
+               ${draft.deliveryZone === zone.id ? 'checked' : ''} />
+        <span class="option__mark" aria-hidden="true"></span>
+        <span class="zone__text">
+          ${escapeHtml(zone.label)}
+          <span class="zone__note">${escapeHtml(zone.note)}</span>
+        </span>
+        <span class="zone__fee">${zone.fee ? formatCurrency(zone.fee) : 'Free'}</span>
+      </label>`,
+      )
+      .join('')}
+  </div>`;
+
+/**
+ * The delivery-location field.
+ *
+ * With the kitchen's coordinates configured the map is the main path and the
+ * distance bands sit folded away underneath for anyone who cannot use it.
+ * Without them the site cannot measure anything, so the bands are all there is.
+ */
+function locationFieldHtml() {
+  if (!hasShopCoordinates()) {
+    return `
+      <div class="field" data-field="deliveryZone">
+        <span class="field__label">Distance from us <span class="req" aria-hidden="true">*</span></span>
+        ${zoneListHtml()}
+        <p class="field__hint">Not sure? Pick the closest — we confirm it on WhatsApp.</p>
+        <p class="field__error" id="deliveryZone-error" data-error></p>
+      </div>`;
+  }
+
+  return `
+    <div class="field" data-field="location">
+      <span class="field__label">Delivery location <span class="req" aria-hidden="true">*</span></span>
+      ${draft.location ? pinnedLocationHtml(draft.location) : pickLocationHtml()}
+      <p class="field__error" id="location-error" data-error></p>
+
+      <details class="zone-fallback" ${draft.deliveryZone && !draft.location ? 'open' : ''}>
+        <summary>Can’t use the map? Pick your distance instead</summary>
+        ${zoneListHtml()}
+        <p class="field__hint">We confirm the charge on WhatsApp before we cook.</p>
+      </details>
+    </div>`;
+}
 
 export function checkoutHtml() {
   return `
@@ -122,30 +242,7 @@ export function checkoutHtml() {
       </div>
 
       <div class="delivery-fields" data-delivery-fields ${draft.orderType === 'delivery' ? '' : 'hidden'}>
-        <div class="field" data-field="deliveryZone">
-          <span class="field__label" id="delivery-zone-label">
-            Distance from us <span class="req" aria-hidden="true">*</span>
-          </span>
-          <div class="zone-list" role="radiogroup" aria-labelledby="delivery-zone-label">
-            ${deliveryZones()
-              .map(
-                (zone) => `
-              <label class="zone">
-                <input type="radio" name="deliveryZone" value="${zone.id}"
-                       ${draft.deliveryZone === zone.id ? 'checked' : ''} />
-                <span class="option__mark" aria-hidden="true"></span>
-                <span class="zone__text">
-                  ${escapeHtml(zone.label)}
-                  <span class="zone__note">${escapeHtml(zone.note)}</span>
-                </span>
-                <span class="zone__fee">${zone.fee ? formatCurrency(zone.fee) : 'Free'}</span>
-              </label>`,
-              )
-              .join('')}
-          </div>
-          <p class="field__hint">Not sure? Pick the closest — we confirm it on WhatsApp.</p>
-          <p class="field__error" id="deliveryZone-error" data-error></p>
-        </div>
+        ${locationFieldHtml()}
 
         ${field({
           id: 'address',
@@ -202,7 +299,11 @@ export function showErrors(form, errors) {
     if (input) input.setAttribute('aria-invalid', message ? 'true' : 'false');
   });
 
-  const first = qs('.has-error input, .has-error textarea', form);
+  // Document order, not selector order, decides which of these wins - so the
+  // first field with an error gets the focus. The map button is listed because
+  // the location field's only inputs are radios folded away inside a closed
+  // <details>, and focusing one of those would move focus somewhere invisible.
+  const first = qs('.has-error [data-open-map], .has-error input, .has-error textarea', form);
   first?.focus();
 }
 
@@ -216,12 +317,23 @@ export const zoneLabel = (zoneId) => {
   return zone ? `${zone.label} · ${zone.note}` : 'To be confirmed';
 };
 
+/**
+ * How far away the customer is, in one line. A measured pin beats a band the
+ * customer guessed at, so it is preferred when both exist.
+ */
+export const distanceLabel = ({ location, deliveryZone }) => {
+  if (location) {
+    return `${location.distanceText} away · ${location.fee ? formatCurrency(location.fee) : 'Free delivery'}`;
+  }
+  return zoneLabel(deliveryZone);
+};
+
 /** Everything the review screen and the WhatsApp message are built from. */
 export function buildOrder() {
   const customer = { ...draft, phone: normalizePhone(draft.phone).digits };
   const items = getItems();
   const sub = subtotal();
-  const fee = deliveryFee(customer.orderType, customer.deliveryZone);
+  const fee = deliveryFee(customer.orderType, customer.deliveryZone, customer.location);
   return { items, customer, subtotal: sub, deliveryFee: fee, total: sub + fee };
 }
 
@@ -258,10 +370,22 @@ export function reviewHtml(order) {
           <dt>Order</dt><dd>${isDelivery ? 'Delivery' : 'Pickup'}</dd>
           ${
             isDelivery
-              ? `<dt>Distance</dt><dd>${escapeHtml(zoneLabel(customer.deliveryZone))}</dd>`
+              ? `<dt>Distance</dt><dd>${escapeHtml(distanceLabel(customer))}</dd>`
               : ''
           }
           ${isDelivery ? `<dt>Address</dt><dd>${escapeHtml(customer.address)}</dd>` : ''}
+          ${
+            isDelivery && customer.location?.mapsUrl
+              ? `<dt>Map pin</dt>
+                 <dd>
+                   <a class="review__maplink" href="${escapeHtml(customer.location.mapsUrl)}"
+                      target="_blank" rel="noopener noreferrer">
+                     ${escapeHtml(customer.location.coordsText)}
+                   </a>
+                   <span class="review__maphint">Sent with your order so we can find you</span>
+                 </dd>`
+              : ''
+          }
           ${isDelivery && customer.landmark ? `<dt>Landmark</dt><dd>${escapeHtml(customer.landmark)}</dd>` : ''}
           ${isDelivery && customer.area ? `<dt>Area</dt><dd>${escapeHtml(customer.area)}</dd>` : ''}
           ${customer.notes ? `<dt>Notes</dt><dd>${escapeHtml(customer.notes)}</dd>` : ''}

@@ -38,7 +38,10 @@ server.
 | **WhatsApp number orders go to** | `src/config.js` | `whatsappNumber` — digits only with country code, e.g. `919567158313` |
 | Phone, address, opening hours | `src/config.js` | `phone`, `address`, `openingHours` |
 | Google Maps / Instagram / Facebook links | `src/config.js` | `googleMapsUrl`, `instagramUrl`, `facebookUrl` |
-| **Delivery charge** | `src/config.js` | `delivery.freeWithinKm` and `delivery.feeBeyond` — free inside the radius, that many rupees outside it |
+| **Delivery charge** | `src/config.js` | `delivery.bands` — each band is `{ withinKm, fee }`, read top to bottom; the last one must be `withinKm: null` |
+| **The kitchen's map pin** | `src/config.js` | `coordinates.lat` / `coordinates.lng` — every delivery distance is measured from here |
+| Furthest you will deliver | `src/config.js` | `delivery.maxKm` (`null` = no limit) |
+| Road allowance on distance | `src/config.js` | `delivery.roadFactor` (`1` = straight-line, `1.3` adds ~30% for roads) |
 | Minimum order for delivery | `src/config.js` | `deliveryMinimum` (0 = off) |
 | **Menu items and prices** | `src/data/menu.js` | see below |
 | Product photos | `public/images/products/` | see [IMAGES.md](IMAGES.md) |
@@ -104,18 +107,62 @@ only one place where money is calculated.
 - Customer name, phone and address are held **in memory only** and are never
   written to storage.
 
+## How the delivery charge is worked out
+
+At checkout the customer pins where they want the food on a map. The site
+measures the straight-line distance from that pin to the kitchen
+(`CONFIG.coordinates`) and charges the first band it falls inside:
+
+| Distance from the kitchen | Charge |
+|---|---|
+| Up to 5 km | Free |
+| 5 – 10 km | ₹40 |
+| More than 10 km | ₹80 |
+
+Those bands live in `CONFIG.delivery.bands` and are written down once — the
+map, the totals, the review screen, the WhatsApp message and the "Find us"
+section all read from there, so changing a number changes it everywhere.
+
+**The map needs no API key and no Google account.** It is OpenStreetMap drawn
+with [Leaflet](https://leafletjs.com), and place search is the free Nominatim
+service. Only the *link* that goes to the kitchen is a Google Maps one, so the
+rider taps it and navigates in the app they already use.
+
+The customer can set the pin three ways — GPS, searching for a place, or just
+dragging the map — because any one of them alone fails somebody. If they will
+not or cannot use a map at all, **"Can't use the map? Pick your distance
+instead"** under the map card reveals the same bands as plain radio buttons.
+A hand-picked band and a measured pin cancel each other out, so the order can
+never carry two different answers.
+
+Distance is measured as the crow flies, which is always a little shorter than
+the road. `CONFIG.delivery.roadFactor` bills closer to real driving distance if
+you want it to — leave it at `1` for straight-line, or set `1.3` to add a
+typical 30% road allowance.
+
+> **Moving the shop?** Open Google Maps, right-click exactly on ZINGOS, and
+> click the latitude/longitude at the top of the menu to copy them. Paste them
+> into `coordinates` in `src/config.js`. If those are ever blank the site
+> cannot measure anything, so it quietly hides the map and asks the customer to
+> pick a distance band instead — it never invents a charge.
+
+---
+
 ## How WhatsApp ordering works
 
 All of it is in `src/utils/whatsapp.js`.
 
-1. The customer fills in name, phone, pickup/delivery (+ address and which
-   distance band they are in) and any notes.
+1. The customer fills in name, phone, pickup/delivery (+ address and their
+   map pin, or the distance band they picked by hand) and any notes.
 2. `buildOrderMessage()` formats a plain-text order with WhatsApp `*bold*`
    markers, kept tight enough that a normal order fits on one phone screen.
-3. `buildWhatsAppUrl()` URL-encodes it onto `https://wa.me/<number>?text=…` —
+3. A pinned location travels with the order as its own line, a plain
+   `https://www.google.com/maps?q=<lat>,<lng>` link the rider can tap to
+   navigate.
+4. `buildWhatsAppUrl()` URL-encodes it onto `https://wa.me/<number>?text=…` —
    the official Click-to-Chat link. On a phone that opens the WhatsApp app; on
    a desktop it opens WhatsApp Web.
-4. The site then says the message is **ready** and the customer still has to
+5. The site then says the message is **ready** and the customer still has to
    press Send. It never claims the restaurant received the order, because the
    page has no way to know whether it was sent.
 

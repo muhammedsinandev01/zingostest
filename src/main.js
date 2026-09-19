@@ -13,6 +13,7 @@ import './styles/sections.css';
 import './styles/modal.css';
 import './styles/cart.css';
 import './styles/checkout.css';
+import './styles/map.css';
 
 import { CONFIG, isPlaceholder, postalAddress } from './config.js';
 import { getProduct, hasChoices, getPrice, defaultSelection } from './data/menu.js';

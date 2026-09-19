@@ -21,6 +21,18 @@ const zoneTag = (zoneId) => {
   return `${zone.label.toLowerCase()} (${zone.fee ? money(zone.fee) : 'free'})`;
 };
 
+/**
+ * How far the customer is, for the delivery line. A measured pin is stated as
+ * a real distance; a hand-picked band keeps its "more than 5 km" wording so
+ * the kitchen can tell a measurement from an estimate at a glance.
+ */
+const distanceTag = ({ location, deliveryZone }) => {
+  if (location) {
+    return `${location.distanceText} away (${location.fee ? money(location.fee) : 'free'})`;
+  }
+  return zoneTag(deliveryZone);
+};
+
 /** Pretty-prints an Indian mobile number: +91 98765 43210. */
 export function formatPhone(raw) {
   const digits = String(raw || '').replace(/\D/g, '');
@@ -46,9 +58,12 @@ export function buildOrderMessage({ items, customer, subtotal, deliveryFee, tota
   lines.push(`👤 *${customer.name}*  📞 ${formatPhone(customer.phone)}`);
 
   if (isDelivery) {
-    lines.push(`🛵 *Delivery* · ${zoneTag(customer.deliveryZone)}`);
+    lines.push(`🛵 *Delivery* · ${distanceTag(customer)}`);
     const where = [customer.address, customer.landmark, customer.area].filter(Boolean).join(' · ');
-    lines.push(`📍 ${where}`);
+    if (where) lines.push(`📍 ${where}`);
+    // The map link goes on its own line: WhatsApp only turns a URL into a
+    // tappable link when nothing else crowds it.
+    if (customer.location?.mapsUrl) lines.push(`🗺️ ${customer.location.mapsUrl}`);
   } else {
     lines.push('🥡 *Pickup*');
   }

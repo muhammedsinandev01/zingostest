@@ -1,0 +1,672 @@
+/* ==========================================================================
+   Delivery location: the map picker, and the location field in checkout.
+   The picker opens over the cart drawer, so it sits one layer above it.
+   ========================================================================== */
+
+.map-overlay {
+  z-index: 90; /* above .overlay (80), which is the cart drawer */
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.map-overlay .overlay__panel {
+  width: 100%;
+  height: 94dvh;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  transform: translateY(100%);
+  overflow: hidden;
+}
+
+.map-overlay.is-open .overlay__panel {
+  transform: none;
+}
+
+/* Search ------------------------------------------------------------------- */
+.map-search {
+  position: relative;
+  z-index: 5; /* the results list has to clear the map below it */
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+}
+
+.map-search__icon {
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  flex: none;
+}
+
+.map-search__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.map-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.5rem 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1rem; /* 16px keeps iOS from zooming on focus */
+}
+
+.map-search input:focus {
+  outline: none;
+}
+
+.map-search input::placeholder {
+  color: #b9a698;
+}
+
+.map-search__clear {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--orange-wash);
+  color: var(--orange-ink);
+}
+
+.map-search__clear svg {
+  width: 14px;
+  height: 14px;
+}
+
+.map-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 46dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.map-results li + li {
+  border-top: 1px solid var(--line);
+}
+
+.map-results button {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  background: transparent;
+  transition: background-color 0.15s;
+}
+
+.map-results button:hover,
+.map-results button:focus-visible {
+  background: var(--orange-wash);
+  outline: none;
+}
+
+.map-results button svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  margin-top: 2px;
+  color: var(--orange);
+}
+
+.map-results strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.map-results em {
+  display: block;
+  font-style: normal;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.map-results__empty {
+  padding: 0.85rem 0.9rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+/* Map stage ---------------------------------------------------------------- */
+.map-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0; /* lets the map shrink inside the flex column */
+}
+
+.map-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* traps Leaflet's own z-indexes inside this box */
+  background: var(--cream-2);
+}
+
+/* The pin never moves: the map slides underneath it. Fewer fiddly drags on
+   a phone, and the target is always dead centre and never under a thumb. */
+.map-crosshair {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.map-crosshair__pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -100%);
+  color: var(--orange);
+  filter: drop-shadow(0 4px 6px rgba(60, 24, 6, 0.45));
+  animation: pin-drop 0.4s var(--ease-back) both;
+}
+
+.map-crosshair__pin svg {
+  display: block;
+  width: 40px;
+  height: 40px;
+  fill: var(--orange);
+  stroke: var(--white);
+  stroke-width: 1.6;
+}
+
+/* The dot the pin actually points at. */
+.map-crosshair__shadow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(26, 14, 8, 0.4);
+}
+
+@keyframes pin-drop {
+  from {
+    transform: translate(-50%, -160%);
+    opacity: 0;
+  }
+}
+
+/* The kitchen, drawn as a Leaflet divIcon so no image path can break. */
+.map-shop-marker {
+  display: grid;
+  justify-items: center;
+  width: max-content !important;
+  height: auto !important;
+  margin: -7px 0 0 -7px !important;
+}
+
+.map-shop-marker__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--char);
+  box-shadow: 0 0 0 3px var(--white), 0 2px 6px rgba(60, 24, 6, 0.4);
+}
+
+.map-shop-marker__label {
+  margin-top: 3px;
+  padding: 1px 6px;
+  border-radius: var(--pill);
+  background: var(--char);
+  color: var(--white);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* Floating controls -------------------------------------------------------- */
+.map-locate {
+  position: absolute;
+  z-index: 3;
+  left: 0.7rem;
+  bottom: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--pill);
+  background: var(--white);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s var(--ease-back);
+}
+
+.map-locate:active {
+  transform: scale(0.95);
+}
+
+.map-locate svg {
+  width: 16px;
+  height: 16px;
+  color: var(--orange);
+}
+
+.map-locate.is-busy {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.map-locate.is-busy svg {
+  animation: locate-spin 1s linear infinite;
+}
+
+@keyframes locate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.map-status {
+  position: absolute;
+  z-index: 3;
+  left: 0.7rem;
+  right: 0.7rem;
+  top: 0.7rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--r-sm);
+  background: rgba(26, 16, 12, 0.88);
+  color: var(--white);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.map-status[data-tone='warn'] {
+  background: var(--spicy);
+}
+
+/* Footer: the live quote --------------------------------------------------- */
+.map-foot {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.map-quote {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--r-sm);
+  background: var(--cream);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  transition: background-color 0.25s, box-shadow 0.25s;
+}
+
+.map-quote[data-state='free'] {
+  background: #eaf7ef;
+  box-shadow: inset 0 0 0 1.5px rgba(46, 139, 87, 0.35);
+}
+
+.map-quote[data-state='paid'] {
+  background: var(--orange-wash);
+  box-shadow: inset 0 0 0 1.5px rgba(238, 85, 34, 0.35);
+}
+
+.map-quote[data-state='too-far'] {
+  background: #fff1ef;
+  box-shadow: inset 0 0 0 1.5px rgba(209, 59, 38, 0.4);
+}
+
+.map-quote__label {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.map-quote__cell strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-quote__cell--fee {
+  text-align: right;
+}
+
+.map-quote[data-state='free'] .map-quote__cell--fee strong {
+  color: var(--veg);
+}
+
+.map-quote[data-state='paid'] .map-quote__cell--fee strong {
+  color: var(--orange-ink);
+}
+
+.map-quote[data-state='too-far'] .map-quote__cell--fee strong {
+  color: var(--spicy);
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.map-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.map-legend__swatch {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--orange);
+}
+
+.map-legend__item[data-fee='free'] .map-legend__swatch {
+  background: var(--veg);
+}
+
+.map-legend__item b {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   The location field inside checkout
+   ========================================================================== */
+
+.loc-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--r-sm);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  text-align: left;
+  transition: box-shadow 0.2s, background-color 0.2s;
+}
+
+.loc-pick:hover,
+.loc-pick:focus-visible {
+  background: var(--orange-wash);
+  box-shadow: inset 0 0 0 2px var(--orange);
+  outline: none;
+}
+
+.loc-pick__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--orange-wash);
+  color: var(--orange);
+}
+
+.loc-pick__icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.loc-pick__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.loc-pick__text strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.loc-pick__text em {
+  display: block;
+  font-style: normal;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.loc-pick__go {
+  flex: none;
+  color: var(--orange);
+}
+
+.loc-pick__go svg {
+  width: 18px;
+  height: 18px;
+}
+
+.field.has-error .loc-pick {
+  box-shadow: inset 0 0 0 1.5px var(--spicy);
+  background: #fff3f1;
+}
+
+/* Confirmed pin ------------------------------------------------------------ */
+.loc-card {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--r-sm);
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--veg);
+  animation: pin-set 0.32s var(--ease-out) both;
+}
+
+.loc-card[data-state='paid'] {
+  box-shadow: inset 0 0 0 2px var(--orange);
+}
+
+@keyframes pin-set {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.loc-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.loc-card__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  background: #eaf7ef;
+  color: var(--veg);
+}
+
+.loc-card[data-state='paid'] .loc-card__icon {
+  background: var(--orange-wash);
+  color: var(--orange);
+}
+
+.loc-card__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.loc-card__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.loc-card__title strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.loc-card__title em {
+  display: block;
+  font-style: normal;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.loc-card__change {
+  flex: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--pill);
+  background: var(--orange-wash);
+  color: var(--orange-ink);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.loc-card__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.loc-card__stats > div {
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: var(--cream);
+}
+
+.loc-card__stats dt {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.loc-card__stats dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.loc-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--orange-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.loc-card__link svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* The hand-picked bands, folded away under the map ------------------------- */
+.zone-fallback {
+  margin-top: 0.2rem;
+}
+
+.zone-fallback summary {
+  display: inline-block;
+  padding: 0.3rem 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.zone-fallback summary::-webkit-details-marker {
+  display: none;
+}
+
+.zone-fallback summary:hover,
+.zone-fallback[open] summary {
+  color: var(--orange-ink);
+}
+
+.zone-fallback .zone-list {
+  margin-top: 0.5rem;
+}
+
+.zone-fallback .field__hint {
+  margin-top: 0.45rem;
+}
+
+/* The pin on the review screen --------------------------------------------- */
+.review__maplink {
+  color: var(--orange-ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.review__maphint {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+}
+
+/* Desktop ------------------------------------------------------------------ */
+@media (min-width: 901px) {
+  .map-overlay {
+    align-items: center;
+  }
+
+  .map-overlay .overlay__panel {
+    width: min(560px, 92vw);
+    height: min(780px, 92dvh);
+    border-radius: var(--r-lg);
+    transform: translateY(24px) scale(0.98);
+    opacity: 0;
+    transition: transform 0.34s var(--ease-out), opacity 0.25s var(--ease-out);
+  }
+
+  .map-overlay.is-open .overlay__panel {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-crosshair__pin,
+  .loc-card {
+    animation: none;
+  }
+
+  .map-locate.is-busy svg {
+    animation: none;
+  }
+}

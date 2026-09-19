@@ -145,11 +145,17 @@ export const itemCount = () => items.reduce((sum, item) => sum + item.quantity, 
 export const subtotal = () => items.reduce((sum, item) => sum + lineTotal(item), 0);
 
 /**
- * Delivery fee in rupees. Pickup is always 0; delivery depends on which
- * distance zone the customer picked at checkout (see CONFIG.delivery).
+ * Delivery fee in rupees. Pickup is always 0.
+ *
+ * For delivery the charge comes from the pin the customer dropped on the map,
+ * because that is measured rather than guessed. A hand-picked distance band is
+ * the fallback for anyone who did not use the map.
  */
-export const deliveryFee = (orderType, zone) =>
-  orderType === 'delivery' ? deliveryFeeForZone(zone) : 0;
+export const deliveryFee = (orderType, zone, location = null) => {
+  if (orderType !== 'delivery') return 0;
+  if (location && Number.isFinite(location.fee)) return location.fee;
+  return deliveryFeeForZone(zone);
+};
 
 export const isEmpty = () => items.length === 0;
 

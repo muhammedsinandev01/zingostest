@@ -33,6 +33,7 @@ import {
 } from '../utils/dom.js';
 import { icons } from './icons.js';
 import { toast } from './toast.js';
+import { openMapPicker } from './mapPicker.js';
 import {
   checkoutHtml,
   readForm,
@@ -97,16 +98,19 @@ const lineHtml = (item) => `
     </div>
   </article>`;
 
-function totalsHtml({ showDelivery, orderType, zone }) {
+function totalsHtml({ showDelivery, orderType, zone, location = null }) {
   const sub = subtotal();
   const isDelivery = showDelivery && orderType === 'delivery';
-  const fee = isDelivery ? deliveryFee(orderType, zone) : 0;
+  const fee = isDelivery ? deliveryFee(orderType, zone, location) : 0;
+  const known = Boolean(zone || location);
 
   let deliveryRow = '';
-  if (isDelivery && zone) {
-    deliveryRow = fee
-      ? `<div class="cart-totals__row"><span>Delivery</span><span>${formatCurrency(fee)}</span></div>`
-      : `<div class="cart-totals__row"><span>Delivery</span><span>Free</span></div>`;
+  if (isDelivery && known) {
+    // Naming the measured distance here explains the number beside it.
+    const label = location ? `Delivery · ${location.distanceText}` : 'Delivery';
+    deliveryRow = `<div class="cart-totals__row"><span>${label}</span><span>${
+      fee ? formatCurrency(fee) : 'Free'
+    }</span></div>`;
   } else if (isDelivery) {
     // Order type chosen but not the distance yet.
     deliveryRow = `<div class="cart-totals__row cart-totals__row--note"><span>${deliveryPolicyText()}</span><span>—</span></div>`;
@@ -157,7 +161,12 @@ function footHtml() {
   if (step === 'checkout') {
     return `
       <div class="overlay__foot">
-        ${totalsHtml({ showDelivery: true, orderType: draft.orderType, zone: draft.deliveryZone })}
+        ${totalsHtml({
+          showDelivery: true,
+          orderType: draft.orderType,
+          zone: draft.deliveryZone,
+          location: draft.location,
+        })}
         <button class="btn btn--block btn--lg" type="button" data-go="review">
           Review order ${icons.arrowRight}
         </button>
@@ -167,7 +176,12 @@ function footHtml() {
   if (step === 'review') {
     return `
       <div class="overlay__foot">
-        ${totalsHtml({ showDelivery: true, orderType: draft.orderType, zone: draft.deliveryZone })}
+        ${totalsHtml({
+          showDelivery: true,
+          orderType: draft.orderType,
+          zone: draft.deliveryZone,
+          location: draft.location,
+        })}
         <button class="btn btn--block btn--lg" type="button" data-send>
           ${icons.whatsapp} Order on WhatsApp
         </button>
@@ -299,10 +313,45 @@ function ensureOverlay() {
     const totals = qs('.overlay__foot .cart-totals', overlay);
     totals?.replaceWith(
       document.createRange().createContextualFragment(
-        totalsHtml({ showDelivery: true, orderType: draft.orderType, zone: draft.deliveryZone }),
+        totalsHtml({
+          showDelivery: true,
+          orderType: draft.orderType,
+          zone: draft.deliveryZone,
+          location: draft.location,
+        }),
       ),
     );
   };
+
+  /**
+   * Opens the map over the drawer.
+   *
+   * The typed-in fields are snapshotted into the draft first: confirming a
+   * pin re-renders the whole checkout step, and everything it redraws comes
+   * from the draft, so a name half-typed would otherwise be lost.
+   */
+  on(overlay, 'click', '[data-open-map]', () => {
+    const form = qs('[data-checkout-form]', overlay);
+    if (form) readForm(form);
+
+    openMapPicker({
+      start: draft.location,
+      onSelect: (location) => {
+        draft.location = location;
+        // A measured pin replaces whatever band was guessed at before.
+        draft.deliveryZone = '';
+        render();
+        // render() hands focus to the first field; put it back on the card
+        // the customer was just working with instead.
+        qs('.loc-card__change', overlay)?.focus({ preventScroll: true });
+        toast(
+          location.fee
+            ? `Location set · ${location.distanceText} · ${formatCurrency(location.fee)} delivery`
+            : `Location set · ${location.distanceText} · free delivery`,
+        );
+      },
+    });
+  });
 
   // Show or hide the delivery-only fields as the order type changes.
   on(overlay, 'change', 'input[name="orderType"]', (event, input) => {
@@ -312,9 +361,19 @@ function ensureOverlay() {
     refreshTotals();
   });
 
-  // Picking a distance zone changes the delivery charge immediately.
+  // Picking a distance band by hand changes the charge immediately, and
+  // stands down the measured pin - the two would otherwise disagree.
   on(overlay, 'change', 'input[name="deliveryZone"]', (event, input) => {
     draft.deliveryZone = input.value;
+    if (draft.location) {
+      const form = qs('[data-checkout-form]', overlay);
+      if (form) readForm(form);
+      draft.deliveryZone = input.value;
+      draft.location = null;
+      render();
+      qs(`input[name="deliveryZone"][value="${input.value}"]`, overlay)?.focus({ preventScroll: true });
+      return;
+    }
     refreshTotals();
   });
 
