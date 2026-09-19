@@ -507,3 +507,11 @@ body.has-cart-bar .footer {
   height: 18px;
   flex: none;
 }
+
+/* How far that rule reaches - quieter than the pricing pill above it. */
+.location__limit {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+}

@@ -4,7 +4,7 @@
  * only - nothing personal is written to localStorage.
  */
 
-import { CONFIG, deliveryZones, hasShopCoordinates } from '../config.js';
+import { CONFIG, deliveryZones, hasShopCoordinates, deliveryLimitText } from '../config.js';
 import { getItems, subtotal, deliveryFee, lineTotal, unitPrice } from '../utils/cart.js';
 import { formatCurrency } from '../utils/formatCurrency.js';
 import { buildOrderMessage, isWhatsAppConfigured, formatPhone } from '../utils/whatsapp.js';
@@ -180,7 +180,9 @@ function locationFieldHtml() {
       <div class="field" data-field="deliveryZone">
         <span class="field__label">Distance from us <span class="req" aria-hidden="true">*</span></span>
         ${zoneListHtml()}
-        <p class="field__hint">Not sure? Pick the closest — we confirm it on WhatsApp.</p>
+        <p class="field__hint">
+          ${deliveryLimitText() ? `${escapeHtml(deliveryLimitText())}. ` : ''}Not sure? Pick the closest — we confirm it on WhatsApp.
+        </p>
         <p class="field__error" id="deliveryZone-error" data-error></p>
       </div>`;
   }
@@ -194,7 +196,9 @@ function locationFieldHtml() {
       <details class="zone-fallback" ${draft.deliveryZone && !draft.location ? 'open' : ''}>
         <summary>Can’t use the map? Pick your distance instead</summary>
         ${zoneListHtml()}
-        <p class="field__hint">We confirm the charge on WhatsApp before we cook.</p>
+        <p class="field__hint">
+          ${deliveryLimitText() ? `${escapeHtml(deliveryLimitText())}. ` : ''}We confirm the charge on WhatsApp before we cook.
+        </p>
       </details>
     </div>`;
 }

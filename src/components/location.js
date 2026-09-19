@@ -1,4 +1,4 @@
-import { CONFIG, isPlaceholder, fullAddress, deliveryPolicyText } from '../config.js';
+import { CONFIG, isPlaceholder, fullAddress, deliveryPolicyText, deliveryLimitText } from '../config.js';
 import { telHref, formatPhone } from '../utils/whatsapp.js';
 import { escapeHtml } from '../utils/dom.js';
 import { icons } from './icons.js';
@@ -97,6 +97,7 @@ export function renderLocation(root) {
               and we confirm the timing on chat.
             </p>
             <p class="location__policy">${icons.scooter} ${deliveryPolicyText()}</p>
+            ${deliveryLimitText() ? `<p class="location__limit">${escapeHtml(deliveryLimitText())} from the kitchen.</p>` : ''}
           </div>
         </div>
       </div>

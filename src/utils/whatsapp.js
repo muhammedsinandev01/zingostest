@@ -86,10 +86,13 @@ export function buildOrderMessage({ items, customer, subtotal, deliveryFee, tota
   /* Money ------------------------------------------------------------------ */
   const totals = [`Subtotal ${money(subtotal)}`];
   if (isDelivery) {
+    // "Free" is only honest once we know how far away they are - from a pin we
+    // measured, or a band they picked. With neither, the charge is still open.
+    const distanceKnown = Boolean(customer.location || customer.deliveryZone);
     totals.push(
       deliveryFee > 0
         ? `Delivery ${money(deliveryFee)}`
-        : customer.deliveryZone
+        : distanceKnown
           ? 'Delivery free'
           : 'Delivery to confirm',
     );

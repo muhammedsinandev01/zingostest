@@ -40,7 +40,7 @@ server.
 | Google Maps / Instagram / Facebook links | `src/config.js` | `googleMapsUrl`, `instagramUrl`, `facebookUrl` |
 | **Delivery charge** | `src/config.js` | `delivery.bands` — each band is `{ withinKm, fee }`, read top to bottom; the last one must be `withinKm: null` |
 | **The kitchen's map pin** | `src/config.js` | `coordinates.lat` / `coordinates.lng` — every delivery distance is measured from here |
-| Furthest you will deliver | `src/config.js` | `delivery.maxKm` (`null` = no limit) |
+| **Furthest you will deliver** | `src/config.js` | `delivery.maxKm` — currently `10`; pins beyond it are refused (`null` = no limit) |
 | Road allowance on distance | `src/config.js` | `delivery.roadFactor` (`1` = straight-line, `1.3` adds ~30% for roads) |
 | Minimum order for delivery | `src/config.js` | `deliveryMinimum` (0 = off) |
 | **Menu items and prices** | `src/data/menu.js` | see below |
@@ -117,16 +117,29 @@ measures the straight-line distance from that pin to the kitchen
 |---|---|
 | Up to 5 km | Free |
 | 5 – 10 km | ₹40 |
-| More than 10 km | ₹80 |
+| More than 10 km | We don't deliver |
 
 Those bands live in `CONFIG.delivery.bands` and are written down once — the
 map, the totals, the review screen, the WhatsApp message and the "Find us"
 section all read from there, so changing a number changes it everywhere.
 
+**10 km is a hard limit**, set by `CONFIG.delivery.maxKm`. A pin beyond it is
+refused at checkout — the customer sees how far out they are and is pointed at
+pickup instead, and the Confirm button stays disabled, so an order that the
+kitchen would have to turn down never reaches WhatsApp. The limit also closes
+off the last band: `bands` ends at `{ withinKm: null, fee: 40 }`, and `maxKm`
+is what turns that open-ended "beyond 5 km" into "5 – 10 km" everywhere it is
+shown. Set `maxKm: null` to deliver anywhere, and add another band if you want
+a third price.
+
 **The map needs no API key and no Google account.** It is OpenStreetMap drawn
 with [Leaflet](https://leafletjs.com), and place search is the free Nominatim
 service. Only the *link* that goes to the kitchen is a Google Maps one, so the
 rider taps it and navigates in the app they already use.
+
+The map opens framed on the whole delivery area, with a dashed green ring at
+the free radius and a solid red one at the limit, so the customer can see where
+they stand before a price is quoted.
 
 The customer can set the pin three ways — GPS, searching for a place, or just
 dragging the map — because any one of them alone fails somebody. If they will

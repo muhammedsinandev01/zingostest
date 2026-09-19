@@ -82,15 +82,16 @@ export const CONFIG = {
   delivery: {
     bands: [
       { withinKm: 5, fee: 0 },
-      { withinKm: 10, fee: 40 },
-      { withinKm: null, fee: 80 },
+      { withinKm: null, fee: 40 },
     ],
 
     /**
      * Furthest the kitchen will deliver, in kilometres. A pin beyond this is
-     * refused at checkout instead of being quoted a fee. null = no limit.
+     * refused at checkout instead of being quoted a fee, and it also closes
+     * off the last band - so the bands above mean "free to 5 km, then Rs 40
+     * out to 10 km, and nothing past that". null = no limit.
      */
-    maxKm: null,
+    maxKm: 10,
 
     /**
      * Distance is measured as the crow flies, which is always a little less
@@ -149,10 +150,22 @@ export const bandForDistance = (km) => {
 /** Delivery charge in rupees for a measured distance. */
 export const feeForDistance = (km) => bandForDistance(km)?.fee ?? 0;
 
+/** Furthest the kitchen will drive, in km, or null when there is no limit. */
+export const deliveryLimitKm = () => {
+  const { maxKm } = CONFIG.delivery;
+  return Number.isFinite(maxKm) && maxKm > 0 ? maxKm : null;
+};
+
 /** True when a pin is further out than the kitchen is willing to drive. */
 export const isBeyondDeliveryRange = (km) => {
-  const { maxKm } = CONFIG.delivery;
-  return Number.isFinite(maxKm) && maxKm > 0 && Number.isFinite(km) && km > maxKm;
+  const limit = deliveryLimitKm();
+  return limit !== null && Number.isFinite(km) && km > limit;
+};
+
+/** "We deliver up to 10 km", or null when there is no limit to mention. */
+export const deliveryLimitText = () => {
+  const limit = deliveryLimitKm();
+  return limit === null ? null : `We deliver up to ${limit} km`;
 };
 
 /**
@@ -161,22 +174,32 @@ export const isBeyondDeliveryRange = (km) => {
  */
 export const deliveryZones = () => {
   const list = bands();
+  const limit = deliveryLimitKm();
+
   return list.map((band, index) => {
     const from = index === 0 ? 0 : list[index - 1].withinKm;
+
+    // The last band is written open-ended, but a delivery limit closes it:
+    // "more than 5 km" is really "5 to 10 km" once we refuse anything past 10.
+    const outer = band.withinKm ?? limit;
+
     const label =
-      band.withinKm !== null
+      outer !== null
         ? index === 0
-          ? `Within ${band.withinKm} km`
-          : `${from} – ${band.withinKm} km`
+          ? `Within ${outer} km`
+          : `${from} – ${outer} km`
         : index === 0
           ? 'Any distance' // a single catch-all band: there is nothing to be "beyond"
           : `More than ${from} km`;
+
     return {
       id: band.withinKm === null ? 'beyond' : `upto-${band.withinKm}`,
       label,
       note: band.fee ? `${CONFIG.currency}${band.fee} delivery charge` : 'Free delivery',
       fee: Math.max(0, Math.round(band.fee) || 0),
-      withinKm: band.withinKm,
+      withinKm: outer,
+      /** True for the ring that marks the edge of the delivery area. */
+      isLimit: limit !== null && outer === limit,
     };
   });
 };

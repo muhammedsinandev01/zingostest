@@ -388,6 +388,16 @@
   background: var(--veg);
 }
 
+/* The delivery limit is a rule, not a price band - a ring, not a filled dot. */
+.map-legend__item--limit .map-legend__swatch {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--spicy);
+}
+
+.map-legend__item--limit b {
+  color: var(--spicy);
+}
+
 .map-legend__item b {
   color: var(--ink);
   font-weight: 800;

@@ -18,7 +18,7 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import { shopCoordinates, deliveryZones } from '../config.js';
+import { shopCoordinates, deliveryZones, deliveryLimitKm, deliveryLimitText } from '../config.js';
 import { quoteForPoint, isValidCoords, formatCoords, googleMapsPinUrl } from '../utils/distance.js';
 import { formatCurrency } from '../utils/formatCurrency.js';
 import { escapeHtml, qs, on, trapFocus, lockScroll, unlockScroll } from '../utils/dom.js';
@@ -53,6 +53,19 @@ function shellHtml() {
       </li>`,
     )
     .join('');
+
+  // The limit is a rule, not a price, so it is spelled out rather than left
+  // for the customer to infer from the outermost band.
+  const limit = deliveryLimitText();
+  const legend =
+    bands +
+    (limit
+      ? `<li class="map-legend__item map-legend__item--limit">
+           <span class="map-legend__swatch" aria-hidden="true"></span>
+           <span class="map-legend__label">Past ${deliveryLimitKm()} km</span>
+           <b>No delivery</b>
+         </li>`
+      : '');
 
   return `
     <div class="overlay__scrim" data-map-close></div>
@@ -105,7 +118,7 @@ function shellHtml() {
           </div>
         </div>
 
-        <ul class="map-legend">${bands}</ul>
+        <ul class="map-legend">${legend}</ul>
 
         <button class="btn btn--block btn--lg" type="button" data-map-confirm disabled>
           ${icons.check} Confirm this location
@@ -193,20 +206,26 @@ function buildMap(startPoint) {
   }).addTo(map);
 
   if (shop) {
-    // A ring per priced band, so the customer can see which side of the line
-    // they are on before the price tells them.
+    /*
+     * A ring per band, so the customer can see which side of a line they are
+     * on before the price tells them. The outermost ring is also the edge of
+     * the delivery area, so it is drawn as a firm solid boundary rather than
+     * another dashed price band - it means "we stop here", not "it costs more
+     * past here".
+     */
     deliveryZones()
       .filter((zone) => zone.withinKm !== null)
       .forEach((zone) => {
+        const colour = zone.isLimit ? '#d13b26' : zone.fee ? '#ee5522' : '#16a34a';
         L.circle([shop.lat, shop.lng], {
           radius: zone.withinKm * 1000,
           interactive: false,
-          color: zone.fee ? '#ee5522' : '#16a34a',
-          weight: 1.5,
-          opacity: 0.55,
-          fillColor: zone.fee ? '#ee5522' : '#16a34a',
-          fillOpacity: 0.05,
-          dashArray: '5 6',
+          color: colour,
+          weight: zone.isLimit ? 2.5 : 1.5,
+          opacity: zone.isLimit ? 0.85 : 0.55,
+          fillColor: colour,
+          fillOpacity: zone.isLimit ? 0.03 : 0.05,
+          ...(zone.isLimit ? {} : { dashArray: '5 6' }),
         }).addTo(map);
       });
 
@@ -236,12 +255,21 @@ function buildMap(startPoint) {
    * drag would snap straight back.
    */
   const target = L.latLng(centre.lat, centre.lng);
-  const targetZoom = map.getZoom();
+  const limitKm = deliveryLimitKm();
+  let targetZoom = map.getZoom();
+
+  // Opening with no pin to return to, frame the whole delivery area instead of
+  // a fixed zoom: the customer sees where the edge is before they start
+  // dragging, and it stays right if the kitchen changes how far it will go.
+  const autoFit = !isValidCoords(startPoint) && limitKm !== null;
   let settling = true;
 
   const settle = () => {
     if (!map || !settling) return;
     map.invalidateSize({ animate: false, pan: false });
+    // Only measurable once the panel has stopped moving, which is exactly
+    // when this runs - the container size is right by now.
+    if (autoFit) targetZoom = map.getBoundsZoom(target.toBounds(limitKm * 2300), false);
     map.setView(target, targetZoom, { animate: false, reset: true });
   };
 
