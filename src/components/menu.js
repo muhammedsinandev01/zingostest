@@ -20,6 +20,13 @@ export const tagHtml = (tag) =>
 /**
  * Product photo, or a branded contour tile for the few items that do not have
  * a photograph in the official ZINGOS artwork yet.
+ *
+ * Two kinds of photo end up here. The originals are cut out of the printed
+ * menu artwork and have transparent backgrounds, so they float on the tile's
+ * warm gradient with a drop shadow under them. Supplied photographs keep the
+ * scene they were shot in, so `imageFit: 'cover'` fills the tile edge to edge
+ * instead - a square photo floating with a drop shadow just looks like a
+ * sticker.
  */
 export function photoHtml(product, { className, width = 240 }) {
   if (!product.image) {
@@ -27,7 +34,8 @@ export function photoHtml(product, { className, width = 240 }) {
       <img src="${MARK}" alt="" width="60" height="92" loading="lazy" decoding="async" />
     </div>`;
   }
-  return `<div class="${className}">
+  const fit = product.imageFit === 'cover' ? ` ${className}--cover` : '';
+  return `<div class="${className}${fit}">
     <img src="${product.image}" alt="${escapeHtml(product.name)}" width="${width}" height="${width}"
          loading="lazy" decoding="async" />
   </div>`;

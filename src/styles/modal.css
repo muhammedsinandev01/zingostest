@@ -160,6 +160,17 @@
   filter: none;
 }
 
+/* A supplied photograph fills the hero rather than floating in it - see the
+   note on .item__photo--cover in menu.css. */
+.product-modal__hero--cover img.food {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  height: 100%;
+  object-fit: cover;
+  filter: none;
+}
+
 .product-modal__hero .overlay__close {
   position: absolute;
   top: 0.65rem;

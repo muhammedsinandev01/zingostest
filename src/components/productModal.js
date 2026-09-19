@@ -94,7 +94,9 @@ function panelHtml(product) {
   return `
     <div class="overlay__scrim" data-close></div>
     <div class="overlay__panel" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
-      <div class="product-modal__hero${hasPhoto ? '' : ' product-modal__hero--placeholder'}">
+      <div class="product-modal__hero${hasPhoto ? '' : ' product-modal__hero--placeholder'}${
+        hasPhoto && product.imageFit === 'cover' ? ' product-modal__hero--cover' : ''
+      }">
         <img class="food" src="${hasPhoto ? product.image : MARK}" alt="${hasPhoto ? escapeHtml(product.name) : ''}"
              width="440" height="330" decoding="async" />
         <button class="overlay__close" type="button" data-close aria-label="Close">${icons.close}</button>

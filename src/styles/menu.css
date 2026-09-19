@@ -218,6 +218,17 @@
   transition: transform 0.4s var(--ease-out);
 }
 
+/* A supplied photograph rather than a cut-out: it brings its own background,
+   so it fills the tile instead of floating on the gradient. The drop shadow
+   goes with it - shadowing a square photo just outlines the rectangle. */
+.item__photo--cover img,
+.fav-card__photo--cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: none;
+}
+
 @media (hover: hover) {
   .item:hover .item__photo img {
     transform: scale(1.07) rotate(-2deg);
