@@ -59,8 +59,6 @@ export function renderAbout(root) {
 export function renderOrderCta(root) {
   root.className = 'section order-cta';
   root.innerHTML = `
-    <img class="floater floater--left" src="/images/products/loaded-fries.webp" alt="" width="300" height="240" loading="lazy" decoding="async" />
-    <img class="floater floater--right" src="/images/products/wrap.webp" alt="" width="300" height="250" loading="lazy" decoding="async" />
     <div class="wrap order-cta__inner" data-reveal>
       <span class="section-kicker">Ready when you are</span>
       <h2>Hungry? <em>Let's go.</em></h2>
@@ -72,6 +70,15 @@ export function renderOrderCta(root) {
         <a class="btn btn--lg" href="#menu" data-nav>Start my order ${icons.arrowRight}</a>
         <a class="btn btn--ghost btn--lg" href="#location">Find us</a>
       </div>
+
+      <figure class="order-cta__shot">
+        <picture>
+          <source srcset="/images/products/ready.webp" type="image/webp" />
+          <img src="/images/products/ready.jpeg"
+               alt="Chicken seasoned by hand, dredged in the ZINGOS coating, then fried to order."
+               width="1440" height="804" loading="lazy" decoding="async" />
+        </picture>
+      </figure>
     </div>
   `;
 }

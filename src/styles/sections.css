@@ -159,24 +159,29 @@
   margin-top: 0.4rem;
 }
 
-.order-cta img.floater {
-  position: absolute;
-  width: 130px;
-  opacity: 0.85;
-  filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.5));
-  pointer-events: none;
+/* How the chicken gets made: seasoned, coated, fried. A wide banner rather
+   than the cut-out floaters this section used to carry - the shot is a single
+   composed photograph, so it earns its own frame instead of being scattered
+   into the corners. */
+.order-cta__shot {
+  /* The inner grid centres and shrink-wraps its children, so the banner has to
+     ask for the full column width rather than inherit it. */
+  justify-self: stretch;
+  width: 100%;
+  margin-top: 1.8rem;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: 0 26px 50px -22px rgba(0, 0, 0, 0.75);
+  /* The photograph is on black, so a hairline keeps it from bleeding into the
+     equally dark section behind it. */
+  outline: 1px solid rgba(255, 246, 238, 0.12);
+  outline-offset: -1px;
 }
 
-.order-cta img.floater--left {
-  left: -8%;
-  bottom: -10%;
-  transform: rotate(-8deg);
-}
-
-.order-cta img.floater--right {
-  right: -8%;
-  top: -12%;
-  transform: rotate(10deg);
+.order-cta__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* Location ----------------------------------------------------------------- */
@@ -447,16 +452,8 @@ body.has-cart-bar .footer {
     padding: 1.8rem;
   }
 
-  .order-cta img.floater {
-    width: 190px;
-  }
-
-  .order-cta img.floater--left {
-    left: -2%;
-  }
-
-  .order-cta img.floater--right {
-    right: -2%;
+  .order-cta__shot {
+    margin-top: 2.4rem;
   }
 
   .footer__grid {

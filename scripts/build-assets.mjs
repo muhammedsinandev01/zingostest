@@ -12,6 +12,7 @@
  */
 import sharp from 'sharp';
 import { mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { cutout } from './lib-cutout.mjs';
 
 const SRC = 'brand-assets';
@@ -43,6 +44,36 @@ for (const p of PRODUCTS) {
     .webp({ quality: 86, alphaQuality: 90, effort: 6 })
     .toFile(`${OUT}/products/${p.file}.webp`);
   console.log('product ->', p.file);
+}
+
+/* ---------------------------------------------------------------------------
+ * Dropped-in photographs.
+ *
+ * These are not cut out of the menu artwork - they are ordinary photos saved
+ * straight into public/images/products/. All this does is make a web-sized
+ * WebP next to the original, because a phone-sized JPEG is far too heavy to
+ * ship: the "Ready when you are" banner is 943 KB as shot and 155 KB here.
+ *
+ * The page asks for the WebP first and keeps the original as its fallback, so
+ * replacing the photograph means dropping in a new file and re-running
+ * `npm run assets` - otherwise the old WebP keeps being served and the new
+ * photograph never shows up.
+ * ------------------------------------------------------------------------ */
+const PHOTOS = [
+  { file: 'ready', ext: 'jpeg', width: 1440, quality: 75 },
+];
+
+for (const photo of PHOTOS) {
+  const src = `${OUT}/products/${photo.file}.${photo.ext}`;
+  if (!existsSync(src)) {
+    console.log('photo -> skipped, no', src);
+    continue;
+  }
+  await sharp(src)
+    .resize({ width: photo.width, kernel: 'lanczos3', withoutEnlargement: true })
+    .webp({ quality: photo.quality, effort: 6 })
+    .toFile(`${OUT}/products/${photo.file}.webp`);
+  console.log('photo ->', photo.file);
 }
 
 /* ---------------------------------------------------------------------------
