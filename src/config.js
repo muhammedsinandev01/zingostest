@@ -16,7 +16,7 @@ export const CONFIG = {
    * Format: country code + number, digits only, no +, no spaces.
    * Example for India: '919876543210'
    */
-  whatsappNumber: '919567158313',
+  whatsappNumber: '919292171777',
 
   /** Shown in the location section and used for the tap-to-call link. */
   phone: '+91 92921 71777',
