@@ -109,8 +109,17 @@ export const CONFIG = {
   currencyCode: 'INR',
   locale: 'en-IN',
 
-  /** Used for canonical/Open Graph tags once the site has a domain. */
-  siteUrl: '',
+  /**
+   * The site's own address, no trailing slash.
+   *
+   * Social previews need absolute URLs - WhatsApp and Facebook fetch the page
+   * from their own servers, so a relative image path resolves against *their*
+   * domain and the preview comes out blank. vite.config.js writes this into
+   * index.html at build time, so the domain is written down exactly once.
+   *
+   * Change it here when the site moves to its own domain.
+   */
+  siteUrl: 'https://zingostest.vercel.app',
 };
 
 /* -------------------------------------------------------------------------- */

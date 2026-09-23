@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "assets": "node scripts/build-assets.mjs",
-    "photos": "node scripts/prepare-photos.mjs"
+    "photos": "node scripts/prepare-photos.mjs",
+    "brand": "node scripts/build-brand-images.mjs"
   },
   "devDependencies": {
     "sharp": "^0.33.5",
