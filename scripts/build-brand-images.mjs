@@ -10,9 +10,12 @@
  * Run with:  npm run brand
  */
 import sharp from 'sharp';
+import { darkGroundToAlpha } from './lib-flat-cutout.mjs';
+import { readFileSync } from 'node:fs';
 
 const P = 'public/images/products';
 const LOGO = 'public/images/logo/zingos-logo.png';
+const SOURCE = 'brand-assets/photos';
 
 const load = (name, width) =>
   sharp(`${P}/${name}.webp`).resize({ width, kernel: 'lanczos3' }).toBuffer();
@@ -23,53 +26,34 @@ const load = (name, width) =>
 
 /**
  * The hero sits on the orange gradient with a soft glow behind it and a drop
- * shadow applied in CSS, so this has to stay transparent: the shadow is cast
+ * shadow applied in CSS, so it has to stay transparent: the shadow is cast
  * from whatever silhouette lands here.
  *
- * A spread rather than one item, because the hero is the only place the whole
- * range is argued at once - bucket, burger, fries and a drink says "there is
- * a meal here", where a single basket of strips only says "chicken".
+ * The supplied shot is a tower of fried chicken on a dark plate against a
+ * near-black studio ground, with the photographer's watermark across the
+ * bottom. `darkGroundToAlpha` lifts the golden food off the grey plate and
+ * ground by its warmth; the bottom band - plate rim, loose crumbs and that
+ * watermark - is cropped away first so none of it can reach the cut-out.
  */
 async function buildHero() {
-  const W = 1200;
-  const H = 1000;
-
-  /*
-   * Ordered back to front: whatever is listed later overlaps what came before.
-   *
-   * Dipped Strips is the centrepiece rather than the bucket, even though the
-   * bucket is the signature. The bucket cut-out was cropped through the
-   * chicken on the printed card, so it has straight vertical edges - invisible
-   * at menu-row size, glaring when it is the biggest thing on the page.
-   */
-  const layers = [
-    { name: 'dipped-strips', width: 560, left: 330, top: 10 },
-    { name: 'mojito', width: 250, left: 930, top: 290 },
-    { name: 'burger', width: 470, left: 30, top: 495 },
-    { name: 'loaded-fries', width: 500, left: 610, top: 555 },
-  ];
-
-  const composite = [];
-  for (const layer of layers) {
-    composite.push({ input: await load(layer.name, layer.width), left: layer.left, top: layer.top });
-  }
-
-  const flat = await sharp({
-    create: { width: W, height: H, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-  })
-    .composite(composite)
-    .png()
+  const src = sharp(readFileSync(`${SOURCE}/hero-chicken-tower.jpg`));
+  const { width, height } = await src.metadata();
+  // Drop the bottom ~18%: below the tower's base it is only plate, the crumbs
+  // spilled on the table and the "SETMA STUDIO" watermark - nothing to keep.
+  const body = await src
+    .extract({ left: 0, top: 0, width, height: Math.round(height * 0.82) })
     .toBuffer();
 
-  // Trimmed so the art sits tight in its box - the CSS centres it, and stray
-  // transparent margin would push the spread off-centre.
-  await sharp(flat)
+  const cut = await darkGroundToAlpha(body);
+
+  await sharp(cut)
     .trim({ threshold: 1 })
-    .webp({ quality: 88, alphaQuality: 92, effort: 6 })
+    .webp({ quality: 90, alphaQuality: 92, effort: 6 })
     .toFile(`${P}/hero.webp`);
 
   const meta = await sharp(`${P}/hero.webp`).metadata();
   console.log('hero  ->', `${meta.width}x${meta.height}`, 'transparent');
+  return meta;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -132,5 +116,8 @@ async function buildOgImage() {
   console.log('og    -> 1200x630  public/og-image.jpg');
 }
 
-await buildHero();
+const hero = await buildHero();
 await buildOgImage();
+
+console.log(`
+hero.js should declare width="${hero.width}" height="${hero.height}"`);

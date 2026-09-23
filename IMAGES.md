@@ -113,7 +113,7 @@ exist. Reshoot these two in plain ZINGOS packaging, or on a bare tray.
 
 | What | Filename | Notes |
 |---|---|---|
-| Hero shot | `hero.webp` | The one photo people see first (currently the Dipped Strips shot from the menu card). A generous spread — full bucket, a burger, fries, a drink — on a plain or orange background. Landscape or square, at least 1600 px wide. |
+| Hero shot | `hero.webp` | Done — a studio tower of fried chicken, cut off its black background so it floats on the orange gradient. Source: `brand-assets/photos/hero-chicken-tower.jpg`; rebuild with `npm run brand`. To swap it, drop a warm-food-on-a-dark-background shot in at that path. |
 | Social share image | `public/og-image.jpg` | 1200 × 630 px. Shown when the link is shared on WhatsApp, Instagram or Facebook. Right now the link preview falls back to the rooster tile. |
 | Storefront / interior | `storefront.webp` | Optional, for the Location section — makes pickup customers confident they've found the right place. |
 | **Logo source file** | — | If you have the original **vector** logo (`.ai`, `.svg`, `.eps` or `.pdf`), send it. The current logo was traced out of a JPEG, so it's sharp at normal sizes but not infinitely scalable. |

@@ -27,7 +27,7 @@ export function renderHero(root) {
 
       <div class="hero__art" data-enter style="--enter-delay:170ms" aria-hidden="true">
         <img class="hero__hero-img" src="/images/products/hero.webp"
-             alt="" width="1150" height="906" fetchpriority="high" decoding="async" />
+             alt="" width="342" height="485" fetchpriority="high" decoding="async" />
       </div>
     </div>
   `;
