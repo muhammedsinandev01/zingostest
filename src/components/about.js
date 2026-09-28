@@ -50,7 +50,7 @@ export function renderAbout(root) {
       </div>
 
       <div class="about__art" data-reveal style="--reveal-delay:160ms" aria-hidden="true">
-        <img src="/images/products/chicken-pops.webp" alt="" width="480" height="420" loading="lazy" decoding="async" />
+        <img src="/images/products/show3.png" alt="" width="577" height="433" loading="lazy" decoding="async" />
       </div>
     </div>
   `;

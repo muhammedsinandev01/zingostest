@@ -87,7 +87,9 @@ function panelHtml(product) {
         ? '<span class="tag tag--spicy">🌶 Spicy</span>'
         : tag === 'veg'
           ? '<span class="tag tag--veg">● Veg</span>'
-          : '',
+          : tag === 'non-veg'
+            ? '<span class="tag tag--non-veg">● Non-Veg</span>'
+            : '',
     )
     .join('');
 

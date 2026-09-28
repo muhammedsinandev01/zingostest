@@ -155,6 +155,18 @@
   color: var(--ink);
 }
 
+.item__availability {
+  align-self: flex-start;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--pill);
+  background: var(--orange-wash);
+  color: var(--orange-ink);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .item__desc {
   font-size: 0.83rem;
   line-height: 1.45;
@@ -211,6 +223,8 @@
 }
 
 .item__photo img {
+  position: absolute;
+  inset: 4%;
   width: 92%;
   height: 92%;
   object-fit: contain;
@@ -221,12 +235,65 @@
 /* A supplied photograph rather than a cut-out: it brings its own background,
    so it fills the tile instead of floating on the gradient. The drop shadow
    goes with it - shadowing a square photo just outlines the rectangle. */
-.item__photo--cover img,
-.fav-card__photo--cover img {
+.item__photo--cover img {
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   filter: none;
+}
+
+.item[data-product='mini-bites'] .item__photo img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.item[data-product='spicy-zinger-wrap'],
+.item[data-product='king-wrap'],
+.item[data-product='zinger-club'] {
+  grid-template-columns: minmax(0, 1fr) 124px;
+}
+
+.item[data-product='spicy-zinger-wrap'] .item__media,
+.item[data-product='king-wrap'] .item__media,
+.item[data-product='zinger-club'] .item__media,
+.item[data-product='spicy-zinger-wrap'] .item__photo,
+.item[data-product='king-wrap'] .item__photo,
+.item[data-product='zinger-club'] .item__photo {
+  width: 124px;
+}
+
+.item[data-product='spicy-zinger-wrap'] .item__photo,
+.item[data-product='king-wrap'] .item__photo,
+.item[data-product='zinger-club'] .item__photo {
+  height: 124px;
+}
+
+@media (max-width: 559px) {
+  .item[data-product='mini-bites'] {
+    grid-template-columns: minmax(0, 1fr) 116px;
+  }
+
+  .item[data-product='mini-bites'] .item__media,
+  .item[data-product='mini-bites'] .item__photo {
+    width: 116px;
+  }
+
+  .item[data-product='mini-bites'] .item__photo {
+    height: 116px;
+  }
+
+  .item[data-product='mini-bites'] .item__photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
 }
 
 @media (hover: hover) {
@@ -269,6 +336,14 @@
 
 .item__add:active {
   transform: translateX(-50%) scale(0.94);
+}
+
+.item__add:disabled {
+  padding-inline: 0.65rem;
+  background: var(--cream-2);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 @media (hover: hover) {
@@ -317,7 +392,11 @@
 /* Favourites rail ---------------------------------------------------------- */
 .fav-card {
   position: relative;
+  flex: 0 0 210px;
   width: 210px;
+  min-width: 210px;
+  max-width: 210px;
+  height: 350px;
   display: flex;
   flex-direction: column;
   border-radius: var(--r-lg);
@@ -343,7 +422,8 @@
 
 .fav-card__photo {
   position: relative;
-  aspect-ratio: 4 / 3;
+  flex: 0 0 auto;
+  aspect-ratio: 16 / 10;
   display: grid;
   place-items: center;
   background: radial-gradient(circle at 50% 62%, var(--cream-2), #ffdcc2);
@@ -351,11 +431,16 @@
 }
 
 .fav-card__photo img {
-  width: 86%;
-  height: 86%;
+  width: 70%;
+  height: 70%;
   object-fit: contain;
   filter: drop-shadow(0 12px 14px rgba(120, 60, 20, 0.3));
   transition: transform 0.4s var(--ease-out);
+}
+
+.fav-card[data-product='dipped-strips'] .fav-card__photo img {
+  width: 92%;
+  height: 92%;
 }
 
 @media (hover: hover) {
@@ -387,6 +472,7 @@
   gap: 0.2rem;
   padding: 0.8rem 0.9rem 0.9rem;
   flex: 1;
+  min-height: 0;
 }
 
 .fav-card__name {

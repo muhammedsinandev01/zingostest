@@ -55,8 +55,14 @@ const PHOTOS = [
   { out: 'zinger-burger', src: W('2.35.00 PM (3)'), mode: 'photo' },
 
   /* Loaded fries variants. */
-  { out: 'loaded-cheesy', src: W('2.35.01 PM (1)'), mode: 'photo' },
+  { out: 'loaded-cheesy', src: `${OUT}/loaded fries.png`, mode: 'cutout', chequer: true },
   { out: 'loaded-spicy', src: W('2.35.01 PM'), mode: 'photo' },
+
+  /* Newly supplied product images. */
+  { out: 'dipped-strips', src: `${OUT}/strips.png`, mode: 'cutout', chequer: true },
+  { out: 'addon-mayo', src: `${OUT}/mayo.jpg`, mode: 'photo', chequer: true },
+  { out: 'addon-dips', src: `${OUT}/dip.jpg`, mode: 'photo', chequer: true },
+  { out: 'addon-extra-piece', src: `${OUT}/extra piece.jpg`, mode: 'photo', chequer: true },
 
   /* Fries that had no photo at all. */
   { out: 'classic-fries', src: `${SRC}/classic fries.jpeg`, mode: 'photo', chequer: true },
@@ -81,8 +87,11 @@ const PHOTOS = [
    Chicken Pops photo the site already has. */
 
 const results = [];
+const requested = new Set(process.argv.slice(2));
 
 for (const photo of PHOTOS) {
+  if (requested.size && !requested.has(photo.out)) continue;
+
   if (!existsSync(photo.src)) {
     console.log('missing  ', photo.src);
     continue;

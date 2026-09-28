@@ -15,6 +15,7 @@ export const tagHtml = (tag) =>
   ({
     spicy: '<span class="tag tag--spicy">🌶 Spicy</span>',
     veg: '<span class="tag tag--veg">● Veg</span>',
+    'non-veg': '<span class="tag tag--non-veg">● Non-Veg</span>',
   })[tag] ?? '';
 
 /**
@@ -45,17 +46,19 @@ export function photoHtml(product, { className, width = 240 }) {
 export function itemRow(product) {
   const from = startingPrice(product);
   const choosable = Boolean(product.optionGroups?.length);
+  const unavailable = product.available === false;
   const tags = (product.tags || []).map(tagHtml).join('');
 
   return `
     <article class="item item--has-add" data-product="${product.id}">
-      <button class="item__link" type="button" data-open-product="${product.id}">
-        <span class="visually-hidden">${escapeHtml(product.name)} — view options</span>
+      <button class="item__link" type="button" data-open-product="${product.id}" ${unavailable ? 'disabled' : ''}>
+        <span class="visually-hidden">${unavailable ? 'Unavailable: ' : ''}${escapeHtml(product.name)} — view options</span>
       </button>
 
       <div class="item__info">
         ${tags ? `<div class="item__tags">${tags}</div>` : ''}
         <h4 class="item__name">${escapeHtml(product.name)}</h4>
+        ${unavailable ? '<span class="item__availability">Unavailable</span>' : ''}
         <p class="item__desc">${escapeHtml(product.description)}</p>
         <p class="item__price">
           ${choosable ? '<span class="from">From</span>' : ''}
@@ -66,9 +69,9 @@ export function itemRow(product) {
       <div class="item__media">
         ${product.badge ? `<span class="tag tag--badge item__badge">${escapeHtml(product.badge)}</span>` : ''}
         ${photoHtml(product, { className: 'item__photo', width: 200 })}
-        <button class="item__add" type="button" data-add="${product.id}"
-                aria-label="${hasChoices(product) ? `Choose options for ${escapeHtml(product.name)}` : `Add ${escapeHtml(product.name)} to cart`}">
-          <span data-add-label>Add</span>
+        <button class="item__add" type="button" data-add="${product.id}" ${unavailable ? 'disabled aria-disabled="true"' : ''}
+          aria-label="${unavailable ? `Unavailable: ${escapeHtml(product.name)}` : hasChoices(product) ? `Choose options for ${escapeHtml(product.name)}` : `Add ${escapeHtml(product.name)} to cart`}">
+          <span data-add-label>${unavailable ? 'Unavailable' : 'Add'}</span>
         </button>
       </div>
     </article>

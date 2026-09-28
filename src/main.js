@@ -47,7 +47,7 @@ renderCartBar();
 on(document, 'click', '[data-add]', (event, button) => {
   event.preventDefault();
   const product = getProduct(button.dataset.add);
-  if (!product) return;
+  if (!product || product.available === false) return;
 
   // Anything with a choice to make opens the sheet first - nothing is ever
   // added to the cart with a variant picked for the customer.
@@ -71,7 +71,8 @@ on(document, 'click', '[data-add]', (event, button) => {
 
 on(document, 'click', '[data-open-product]', (event, button) => {
   event.preventDefault();
-  openProductModal(button.dataset.openProduct);
+  const product = getProduct(button.dataset.openProduct);
+  if (product?.available !== false) openProductModal(button.dataset.openProduct);
 });
 
 on(document, 'click', '[data-open-cart]', (event) => {

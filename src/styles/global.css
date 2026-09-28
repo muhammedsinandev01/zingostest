@@ -353,6 +353,11 @@ h4 {
   color: var(--veg);
 }
 
+.tag--non-veg {
+  background: rgba(209, 59, 38, 0.12);
+  color: var(--spicy);
+}
+
 .tag--badge {
   background: var(--gold);
   color: #4a2a00;
