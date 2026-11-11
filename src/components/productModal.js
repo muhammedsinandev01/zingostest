@@ -4,6 +4,7 @@ import {
   defaultSelection,
   selectionLabel,
   ADDONS,
+  DIP_OPTIONS,
 } from '../data/menu.js';
 import { addItem } from '../utils/cart.js';
 import { formatCurrency } from '../utils/formatCurrency.js';
@@ -66,13 +67,25 @@ function addonsHtml(product) {
           .map((addonId) => {
             const addon = ADDONS[addonId];
             if (!addon) return '';
+            const isDips = addonId === 'dips';
             return `
             <label class="option option--check" for="addon-${addon.id}">
               <input type="checkbox" id="addon-${addon.id}" value="${addon.id}" data-addon />
               <span class="option__mark" aria-hidden="true"></span>
               <span class="option__text">${escapeHtml(addon.name)}</span>
               <span class="option__price">+${formatCurrency(addon.price)}</span>
-            </label>`;
+            </label>
+            ${isDips ? `
+              <div class="dip-options" data-dip-options hidden>
+                ${DIP_OPTIONS.map((dip, i) => `
+                  <label class="option option--sub" for="dip-${dip.id}">
+                    <input type="radio" id="dip-${dip.id}" name="dipFlavour" value="${dip.id}" ${i === 0 ? 'checked' : ''} data-dip-flavour />
+                    <span class="option__mark" aria-hidden="true"></span>
+                    <span class="option__text">${escapeHtml(dip.label)}</span>
+                  </label>
+                `).join('')}
+              </div>
+            ` : ''}`;
           })
           .join('')}
       </div>
@@ -135,7 +148,14 @@ function panelHtml(product) {
 /* -------------------------------------------------------------------------- */
 
 function addonList() {
-  return [...state.addons].map((id) => ({ ...ADDONS[id] }));
+  return [...state.addons].map((id) => {
+    const addon = { ...ADDONS[id] };
+    if (id === 'dips' && state.dipFlavour) {
+      const dip = DIP_OPTIONS.find((d) => d.id === state.dipFlavour);
+      if (dip) addon.name = `Dips (${dip.label})`;
+    }
+    return addon;
+  });
 }
 
 function unitTotal() {
@@ -203,7 +223,16 @@ function ensureOverlay() {
   on(overlay, 'change', 'input[data-addon]', (event, input) => {
     if (input.checked) state.addons.add(input.value);
     else state.addons.delete(input.value);
+    // Show / hide dip flavour sub-options when Dips is toggled.
+    if (input.value === 'dips') {
+      const dipOptions = qs('[data-dip-options]', overlay);
+      if (dipOptions) dipOptions.hidden = !input.checked;
+    }
     syncPrices();
+  });
+
+  on(overlay, 'change', 'input[data-dip-flavour]', (event, input) => {
+    state.dipFlavour = input.value;
   });
 
   on(overlay, 'click', '[data-qty]', (event, button) => {
@@ -227,7 +256,7 @@ export function openProductModal(productId) {
 
   ensureOverlay();
   const wasOpen = overlay.classList.contains('is-open');
-  state = { product, selection: defaultSelection(product), addons: new Set(), quantity: 1 };
+  state = { product, selection: defaultSelection(product), addons: new Set(), dipFlavour: DIP_OPTIONS[0]?.id ?? '', quantity: 1 };
   overlay.innerHTML = panelHtml(product);
   overlay.setAttribute('aria-hidden', 'false');
   if (!wasOpen) lockScroll('product');

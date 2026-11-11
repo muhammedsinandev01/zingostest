@@ -27,18 +27,17 @@
 
 export const CATEGORIES = [
   { id: 'bucket-chicken', name: 'Bucket Chicken', blurb: 'The signature. Fried to order.' },
-  { id: 'dipped-strips', name: 'Dipped Strips', blurb: 'Crunch-coated chicken strips.' },
   { id: 'combo-meals', name: 'Combo Meals', blurb: 'Chicken, sides and a drink.' },
+  { id: 'trio-pizza', name: 'Trio Pizza', blurb: 'One massive pizza, three bold flavours.' },
   { id: 'pizza', name: 'Zingos Pizza', blurb: 'Hand-topped, loaded with mozzarella.' },
-  { id: 'wrap', name: 'Wrap', blurb: 'Rolled, stuffed, ready to go.' },
-  { id: 'club-sandwich', name: 'Club Sandwich', blurb: 'Stacked and toasted.' },
-  { id: 'burger', name: 'Burger', blurb: 'Chicken burgers, built tall.' },
-  { id: 'fries', name: 'Fries', blurb: 'Hot, salted, golden.' },
+  { id: 'wrap', name: 'Wraps', blurb: 'Rolled, stuffed, ready to go.' },
+  { id: 'club-sandwich', name: 'Club Sandwiches', blurb: 'Stacked and toasted.' },
+  { id: 'burger', name: 'Burgers', blurb: 'Chicken burgers, built tall.' },
   { id: 'loaded-fries', name: 'Loaded Fries', blurb: 'Fries buried under the good stuff.' },
+  { id: 'fries', name: 'Fries', blurb: 'Hot, salted, golden.' },
   { id: 'starters', name: 'Starters', blurb: 'Small bites to start.' },
   { id: 'mojitos', name: 'Mojitos', blurb: 'Iced, fizzy, zero alcohol.' },
   { id: 'bubble-tea', name: 'Bubble Tea', blurb: 'Brewed tea with chewy pearls.' },
-  { id: 'addons', name: 'Add-ons', blurb: 'Dips, sides and extra pieces.' },
 ];
 
 /** Add-on catalogue, exactly as printed on the menu card. */
@@ -49,6 +48,18 @@ export const ADDONS = {
   'extra-piece': { id: 'extra-piece', name: 'Extra Chicken Piece', price: 99 },
 };
 
+/**
+ * Dip flavour options. When a customer adds the Dips add-on, these are the
+ * choices available. All are the same price (the Dips add-on price).
+ */
+export const DIP_OPTIONS = [
+  { id: 'peri-peri', label: 'Peri Peri' },
+  { id: 'bbq', label: 'BBQ' },
+  { id: 'cheese', label: 'Cheese' },
+  { id: 'sriracha', label: 'Sriracha' },
+  { id: 'thousand-island', label: 'Thousand Island' },
+];
+
 const CHICKEN_ADDONS = ['mayo', 'dips', 'kuboos', 'extra-piece'];
 
 const FLAVOUR_GROUP = {
@@ -57,6 +68,29 @@ const FLAVOUR_GROUP = {
   options: [
     { id: 'original', label: 'Zingos Original' },
     { id: 'peri', label: 'Zingos Peri Peri', tag: 'spicy' },
+  ],
+};
+
+const PIZZA_SIZE_GROUP = {
+  id: 'size',
+  label: 'Choose size',
+  options: [
+    { id: 'small', label: 'Small' },
+    { id: 'medium', label: 'Medium' },
+    { id: 'large', label: 'Large' },
+  ],
+};
+
+/**
+ * Size group for pizzas that do not have a confirmed Small price yet.
+ * Customers can only pick Medium or Large until the admin sets the Small price.
+ */
+const PIZZA_SIZE_GROUP_NO_SMALL = {
+  id: 'size',
+  label: 'Choose size',
+  options: [
+    { id: 'medium', label: 'Medium' },
+    { id: 'large', label: 'Large' },
   ],
 };
 
@@ -96,35 +130,12 @@ export const MENU = [
     addons: CHICKEN_ADDONS,
   },
 
-  /* ----------------------------------------------------- DIPPED STRIPS ---- */
-  {
-    id: 'dipped-strips',
-    categoryId: 'dipped-strips',
-    name: 'Dipped Strips',
-    description: 'Chicken strips in a craggy, extra-crunchy coating.',
-    image: `${IMG}/dipped-strips.webp`,
-    imageFit: 'cover',
-    featured: true,
-    optionGroups: [
-      {
-        id: 'size',
-        label: 'How many strips?',
-        options: [
-          { id: '4', label: '4 pcs' },
-          { id: '8', label: '8 pcs' },
-        ],
-      },
-    ],
-    prices: { 4: 239, 8: 409 },
-    addons: CHICKEN_ADDONS,
-  },
-
   /* ------------------------------------------------------ COMBO MEALS ---- */
   {
     id: 'zingos-snack',
     categoryId: 'combo-meals',
     name: 'Zingos Snack',
-    description: '2 pcs Chicken · 1 Kuboos · 1 Dip',
+    description: '2 pcs Chicken · 1 Kuboos · 1 Mayo',
     image: `${IMG}/combo.png`,
     imageFit: 'cover',
     optionGroups: [FLAVOUR_GROUP],
@@ -134,7 +145,7 @@ export const MENU = [
     id: 'zingos-regular',
     categoryId: 'combo-meals',
     name: 'Zingos Regular',
-    description: '4 pcs Chicken · 2 Kuboos · 1 Dip · Fries · 250ml Pepsi',
+    description: '4 pcs Chicken · 2 Kuboos · 1 Mayo · Fries · 250 ml Pepsi',
     image: `${IMG}/combo.png`,
     imageFit: 'cover',
     featured: true,
@@ -145,19 +156,19 @@ export const MENU = [
     id: 'zingos-meal',
     categoryId: 'combo-meals',
     name: 'Zingos Meal',
-    description: '6 pcs Chicken · 3 Kuboos · 2 Dip · Fries · 750ml Pepsi',
+    description: '6 pcs Chicken · 3 Kuboos · 2 Mayo · Fries · 750 ml Pepsi',
     image: `${IMG}/combo.png`,
     imageFit: 'cover',
     featured: true,
     badge: 'Most loved',
     optionGroups: [FLAVOUR_GROUP],
-    prices: { original: 569, peri: 619 },
+    prices: { original: 599, peri: 649 },
   },
   {
     id: 'zingos-family',
     categoryId: 'combo-meals',
     name: 'Zingos Family',
-    description: '9 pcs Chicken · 4 Kuboos · 3 Dip · Fries · 1.25 Ltr Pepsi',
+    description: '9 pcs Chicken · 4 Kuboos · 3 Mayo · Fries · 750 ml Pepsi',
     image: `${IMG}/combo.png`,
     imageFit: 'cover',
     optionGroups: [FLAVOUR_GROUP],
@@ -167,11 +178,24 @@ export const MENU = [
     id: 'zingos-party',
     categoryId: 'combo-meals',
     name: 'Zingos Party',
-    description: '12 pcs Chicken · 5 Kuboos · 3 Dip · Fries · 2.25 Ltr Pepsi',
+    description: '12 pcs Chicken · 5 Kuboos · 3 Mayo · Fries · 1.25 litre Pepsi',
     image: `${IMG}/combo.png`,
     imageFit: 'cover',
     optionGroups: [FLAVOUR_GROUP],
     prices: { original: 999, peri: 1049 },
+  },
+
+  /* ------------------------------------------------------- TRIO PIZZA ---- */
+  {
+    id: 'zingos-mega-trio-pizza',
+    categoryId: 'trio-pizza',
+    name: 'Zingos Mega Trio Pizza',
+    description: 'A massive 1-meter pizza made for sharing, featuring three bold flavours on one pizza, perfect for 4–6 people.',
+    image: `${IMG}/trio pizza.png`,
+    imageFit: 'cover',
+    featured: true,
+    badge: 'New',
+    price: 1299,
   },
 
   /* ------------------------------------------------------------ PIZZA ---- */
@@ -179,83 +203,66 @@ export const MENU = [
     id: 'tandoori-chicken-pizza',
     categoryId: 'pizza',
     name: 'Tandoori Chicken Pizza',
-    description: 'Smoky tandoori chicken, onion, capsicum & stretchy mozzarella with a bold tandoori kick.',
+    description: 'Smoky tandoori chicken, onion, capsicum, and stretchy mozzarella with a bold tandoori kick.',
     image: `${IMG}/pizza-tandoori.png`,
     imageFit: 'cover',
-    optionGroups: [
-      {
-        id: 'size',
-        label: 'Choose size',
-        options: [
-          { id: 'small', label: 'Small' },
-          { id: 'medium', label: 'Medium' },
-          { id: 'large', label: 'Large' },
-        ],
-      },
-    ],
+    optionGroups: [PIZZA_SIZE_GROUP],
+    prices: { small: 249, medium: 329, large: 429 },
+  },
+  {
+    id: 'bbq-chicken-pizza',
+    categoryId: 'pizza',
+    name: 'BBQ Chicken Pizza',
+    description: 'Juicy BBQ chicken, onion, smoky BBQ sauce, and mozzarella for a sweet-smoky flavour.',
+    image: `${IMG}/pizza-bbq.png`,
+    imageFit: 'cover',
+    optionGroups: [PIZZA_SIZE_GROUP],
     prices: { small: 249, medium: 329, large: 429 },
   },
   {
     id: 'cheese-burst-pizza',
     categoryId: 'pizza',
     name: 'Cheese Burst Pizza',
-    description: 'Loaded with rich creamy cheese, mozzarella & a gooey cheese-filled base.',
+    description: 'Loaded with rich, creamy cheese, mozzarella, and a gooey cheese-filled base.',
     image: `${IMG}/pizza-cheesa-burst.png`,
     imageFit: 'cover',
     featured: true,
-    optionGroups: [
-      {
-        id: 'size',
-        label: 'Choose size',
-        options: [
-          { id: 'small', label: 'Small' },
-          { id: 'medium', label: 'Medium' },
-          { id: 'large', label: 'Large' },
-        ],
-      },
-    ],
+    optionGroups: [PIZZA_SIZE_GROUP],
     prices: { small: 279, medium: 359, large: 459 },
-  },
-  {
-    id: 'bbq-chicken-pizza',
-    categoryId: 'pizza',
-    name: 'BBQ Chicken Pizza',
-    description: 'Juicy BBQ chicken, onion, smoky BBQ sauce & mozzarella for that sweet-smoky flavour.',
-    image: `${IMG}/pizza-bbq.png`,
-    imageFit: 'cover',
-    optionGroups: [
-      {
-        id: 'size',
-        label: 'Choose size',
-        options: [
-          { id: 'small', label: 'Small' },
-          { id: 'medium', label: 'Medium' },
-          { id: 'large', label: 'Large' },
-        ],
-      },
-    ],
-    prices: { small: 249, medium: 329, large: 429 },
   },
   {
     id: 'veg-supreme-pizza',
     categoryId: 'pizza',
     name: 'Veg Supreme Pizza',
-    description: 'A colourful mix of onion, capsicum, sweet corn, olives & jalapeños with loads of cheese.',
+    description: 'A colourful mix of onion, capsicum, sweet corn, olives, and jalapeños with plenty of cheese.',
     image: `${IMG}/pizza-veg-supreme.png`,
     imageFit: 'cover',
     tags: ['veg'],
-    optionGroups: [
-      {
-        id: 'size',
-        label: 'Choose size',
-        options: [
-          { id: 'small', label: 'Small' },
-          { id: 'medium', label: 'Medium' },
-          { id: 'large', label: 'Large' },
-        ],
-      },
-    ],
+    optionGroups: [PIZZA_SIZE_GROUP],
     prices: { small: 229, medium: 299, large: 389 },
+  },
+  {
+    id: 'zingos-supreme-pizza',
+    categoryId: 'pizza',
+    name: 'Zingos Supreme Pizza',
+    description: 'Spicy Peri Peri chicken with fresh capsicum, onion, and creamy mozzarella, topped with butter for a rich, crispy crust and jalapeños for an extra kick.',
+    image: `${IMG}/zingos supreme.png`,
+    imageFit: 'cover',
+    tags: ['spicy'],
+    badge: 'New',
+    optionGroups: [PIZZA_SIZE_GROUP_NO_SMALL],
+    prices: { medium: 399, large: 499 },
+  },
+  {
+    id: 'zingos-pepperoni-pizza',
+    categoryId: 'pizza',
+    name: 'Zingos Pepperoni Pizza',
+    description: 'Loaded with juicy chicken pepperoni, rich mozzarella cheese, and signature pizza sauce, baked to perfection for a smoky, cheesy, meaty bite.',
+    image: `${IMG}/zingos pepperoni pizza.png`,
+    imageFit: 'cover',
+    badge: 'New',
+    optionGroups: [PIZZA_SIZE_GROUP_NO_SMALL],
+    prices: { medium: 359, large: 469 },
   },
 
   /* ------------------------------------------------------------- WRAP ---- */
@@ -270,10 +277,26 @@ export const MENU = [
     price: 199,
   },
   {
-    id: 'king-wrap',
+    id: 'mexican-wrap',
     categoryId: 'wrap',
-    name: 'King Wrap',
-    description: 'The bigger roll - extra filling, same crunch.',
+    name: 'Mexican Wrap',
+    description: 'A bold Mexican-style wrap packed with spiced chicken and fresh fillings.',
+    image: `${IMG}/wrap.png`,
+    price: 199,
+  },
+  {
+    id: 'tandoori-chicken-wrap',
+    categoryId: 'wrap',
+    name: 'Tandoori Chicken Wrap',
+    description: 'Smoky tandoori chicken rolled up with crunchy vegetables and sauce.',
+    image: `${IMG}/wrap.png`,
+    price: 199,
+  },
+  {
+    id: 'zingos-king-wrap',
+    categoryId: 'wrap',
+    name: 'Zingos King Wrap',
+    description: 'The bigger roll — extra filling, same crunch.',
     image: `${IMG}/wrap.png`,
     price: 259,
   },
@@ -285,7 +308,23 @@ export const MENU = [
     name: 'Zinger Club',
     description: 'Toasted club sandwich stacked with crispy chicken.',
     image: `${IMG}/zinger club sandwich.png`,
-    price: 129,
+    price: 169,
+  },
+  {
+    id: 'tandoori-chicken-club',
+    categoryId: 'club-sandwich',
+    name: 'Tandoori Chicken Club',
+    description: 'Toasted club sandwich with smoky tandoori chicken.',
+    image: `${IMG}/zinger club sandwich.png`,
+    price: 179,
+  },
+  {
+    id: 'royal-club',
+    categoryId: 'club-sandwich',
+    name: 'Royal Club',
+    description: 'The premium club — loaded layers, toasted to perfection.',
+    image: `${IMG}/zinger club sandwich.png`,
+    price: 199,
   },
 
   /* ----------------------------------------------------------- BURGER ---- */
@@ -297,15 +336,34 @@ export const MENU = [
     image: `${IMG}/zinger-burger.png`,
     imageFit: 'cover',
     featured: true,
-    price: 129,
+    price: 149,
   },
   {
-    id: 'chicken-smash-burger',
+    id: 'tandoori-chicken-burger',
     categoryId: 'burger',
-    name: 'Chicken Smash Burger',
-    description: 'Smashed chicken patty, griddled to the edges.',
-    image: `${IMG}/chicken-smash-burger.png`,
-    price: 149,
+    name: 'Tandoori Chicken Burger',
+    description: 'Smoky tandoori chicken patty in a toasted bun.',
+    image: `${IMG}/zinger-burger.png`,
+    imageFit: 'cover',
+    price: 169,
+  },
+  {
+    id: 'royal-burger',
+    categoryId: 'burger',
+    name: 'Royal Burger',
+    description: 'A premium burger stacked with extra toppings.',
+    image: `${IMG}/zinger-burger.png`,
+    imageFit: 'cover',
+    price: 179,
+  },
+  {
+    id: 'double-zinger',
+    categoryId: 'burger',
+    name: 'Double Zinger',
+    description: 'Two crispy fillets, double the crunch.',
+    image: `${IMG}/zinger-burger.png`,
+    imageFit: 'cover',
+    price: 199,
   },
   {
     id: 'sizzling-burger',
@@ -313,15 +371,35 @@ export const MENU = [
     name: 'Sizzling Burger',
     description: 'Our loaded burger, built for a bigger appetite.',
     image: `${IMG}/sizzling burger.png`,
+    price: 259,
+  },
+  {
+    id: 'beef-smash-burger',
+    categoryId: 'burger',
+    name: 'Beef Smash Burger',
+    description: 'Smashed beef patty, griddled to the edges.',
+    image: `${IMG}/chicken-smash-burger.png`,
+    price: 349,
+  },
+
+  /* ----------------------------------------------------- LOADED FRIES ---- */
+  {
+    id: 'spicy-loaded',
+    categoryId: 'loaded-fries',
+    name: 'Spicy Loaded Fries',
+    description: 'Fries loaded with spiced chicken and sauce.',
+    image: `${IMG}/loaded-cheesy.webp`,
+    tags: ['spicy'],
+    featured: true,
     price: 199,
   },
   {
-    id: 'mini-bites',
-    categoryId: 'burger',
-    name: 'Mini Bites',
-    description: '4 pcs · Mini burgers, made for sharing.',
-    image: `${IMG}/mini bites.png`,
-    price: 259,
+    id: 'cheesy-loaded',
+    categoryId: 'loaded-fries',
+    name: 'Cheesy Loaded Fries',
+    description: 'Fries loaded with chicken and extra cheese.',
+    image: `${IMG}/loaded-cheesy.webp`,
+    price: 199,
   },
 
   /* ------------------------------------------------------------ FRIES ---- */
@@ -356,26 +434,6 @@ export const MENU = [
     price: 79,
   },
 
-  /* ----------------------------------------------------- LOADED FRIES ---- */
-  {
-    id: 'spicy-loaded',
-    categoryId: 'loaded-fries',
-    name: 'Spicy Loaded',
-    description: 'Fries loaded with spiced chicken and sauce.',
-    image: `${IMG}/loaded-cheesy.webp`,
-    tags: ['spicy'],
-    featured: true,
-    price: 179,
-  },
-  {
-    id: 'cheesy-loaded',
-    categoryId: 'loaded-fries',
-    name: 'Cheesy Loaded',
-    description: 'Fries loaded with chicken and extra cheese.',
-    image: `${IMG}/loaded-cheesy.webp`,
-    price: 199,
-  },
-
   /* --------------------------------------------------------- STARTERS ---- */
   {
     id: 'nuggets',
@@ -400,28 +458,27 @@ export const MENU = [
     id: 'chicken-pops',
     categoryId: 'starters',
     name: 'Chicken Pops',
-    description: 'Bite-size popcorn chicken - one is never enough.',
+    description: 'Bite-size popcorn chicken — one is never enough.',
     image: `${IMG}/chicken-pops.png`,
     featured: true,
     price: 129,
   },
   {
-    id: 'fried-shrimps',
+    id: 'strips-n-dips',
     categoryId: 'starters',
-    name: 'Fried Shrimps',
-    description: '6 pcs · Crisp-fried shrimps.',
-    image: `${IMG}/fried-shrimps.webp`,
+    name: "Strips'n Dips",
+    description: '4 pcs · Crunch-coated chicken strips with dips.',
+    image: `${IMG}/dipped-strips.webp`,
     imageFit: 'cover',
-    available: false,
-    price: 249,
+    price: 239,
   },
 
   /* ---------------------------------------------------------- MOJITOS ---- */
   {
-    id: 'blue-mint-mojito',
+    id: 'blue-ocean-mojito',
     categoryId: 'mojitos',
-    name: 'Blue Mint',
-    description: 'Iced mint mojito with a blue twist.',
+    name: 'Blue Ocean',
+    description: 'Iced blue mojito with a refreshing twist.',
     image: `${IMG}/blue-mint.png`,
     tags: ['veg'],
     price: 99,
@@ -462,6 +519,15 @@ export const MENU = [
     tags: ['veg'],
     price: 99,
   },
+  {
+    id: 'passion-fruit-mojito',
+    categoryId: 'mojitos',
+    name: 'Passion Fruit',
+    description: 'Tangy passion fruit mojito over ice.',
+    image: `${IMG}/virgin.png`,
+    tags: ['veg'],
+    price: 99,
+  },
 
   /* ------------------------------------------------------- BUBBLE TEA ---- */
   {
@@ -471,7 +537,6 @@ export const MENU = [
     description: 'Creamy taro milk tea with chewy pearls.',
     image: `${IMG}/taro-velvet.png`,
     tags: ['veg'],
-    available: false,
     price: 149,
   },
   {
@@ -481,68 +546,25 @@ export const MENU = [
     description: 'Green matcha milk tea with pearls.',
     image: `${IMG}/matcha-mist.png`,
     tags: ['veg'],
-    available: false,
     price: 149,
   },
   {
-    id: 'mango-saga-bliss',
+    id: 'coffee-craze',
     categoryId: 'bubble-tea',
-    name: 'Mango Saga Bliss',
-    description: 'Mango bubble tea, sweet and chilled.',
-    image: `${IMG}/mango-saga-bliss.png`,
-    tags: ['veg'],
-    available: false,
-    price: 149,
-  },
-  {
-    id: 'coffee-rush',
-    categoryId: 'bubble-tea',
-    name: 'Coffee Rush',
+    name: 'Coffee Craze',
     description: 'Iced coffee bubble tea with pearls.',
     image: `${IMG}/coffee-rush.png`,
     tags: ['veg'],
-    available: false,
     price: 149,
   },
-
-  /* ---------------------------------------------------------- ADD-ONS ---- */
   {
-    id: 'addon-mayo',
-    categoryId: 'addons',
-    name: 'Mayo',
-    description: 'Extra pot of mayo.',
-    image: `${IMG}/addon-mayo.png`,
-    imageFit: 'cover',
-    tags: ['non-veg'],
-    price: 19,
-  },
-  {
-    id: 'addon-dips',
-    categoryId: 'addons',
-    name: 'Dips',
-    description: 'Extra dip for your chicken.',
-    image: `${IMG}/addon-dips.png`,
-    imageFit: 'cover',
-    tags: ['non-veg'],
-    price: 29,
-  },
-  {
-    id: 'addon-kuboos',
-    categoryId: 'addons',
-    name: 'Kuboos',
-    description: 'Soft kuboos bread.',
-    image: `${IMG}/kuboos.png`,
+    id: 'caramel-rush',
+    categoryId: 'bubble-tea',
+    name: 'Caramel Rush',
+    description: 'Rich caramel milk tea with chewy pearls.',
+    image: `${IMG}/coffee-rush.png`,
     tags: ['veg'],
-    price: 10,
-  },
-  {
-    id: 'addon-extra-piece',
-    categoryId: 'addons',
-    name: 'Extra Chicken Piece',
-    description: 'One more piece of fried chicken.',
-    image: `${IMG}/addon-extra-piece.png`,
-    imageFit: 'cover',
-    price: 99,
+    price: 149,
   },
 ];
 
@@ -563,7 +585,8 @@ export function getPrice(product, selection = {}) {
 /** Cheapest price a product can be ordered at - used for "From ₹499". */
 export function startingPrice(product) {
   if (!product.optionGroups?.length) return product.price ?? 0;
-  return Math.min(...Object.values(product.prices));
+  const validPrices = Object.values(product.prices).filter((p) => p > 0);
+  return validPrices.length ? Math.min(...validPrices) : 0;
 }
 
 /** True when the customer must pick something before adding to the cart. */
@@ -588,4 +611,3 @@ export const productsByCategory = (categoryId) =>
   MENU.filter((product) => product.categoryId === categoryId);
 
 export const featuredProducts = () => MENU.filter((product) => product.featured);
-
